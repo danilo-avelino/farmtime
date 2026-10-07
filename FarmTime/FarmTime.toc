@@ -1,8 +1,8 @@
-## Interface: 120001
+## Interface: 11509
 ## Title: Farm Time
-## Notes: Destaca a erva ou minério à sua frente com um ícone grande sobre o próprio nó.
+## Notes: Alerta grande quando a erva ou minério à sua frente vira alvo de interação.
 ## Author: Danilo Avelino
-## Version: 0.2.0
+## Version: 0.3.0
 ## SavedVariables: FarmTimeDB
 ## IconTexture: Interface\Icons\Trade_Herbalism
 

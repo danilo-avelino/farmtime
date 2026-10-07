@@ -1,27 +1,31 @@
--- Farm Time - Destaque na tela
+-- Farm Time - Destaque
 --
 -- Addons não conseguem enxergar objetos do mundo nem converter posição 3D em
--- posição de tela. Mas o próprio jogo tem o "soft target de interação": ele
--- escolhe o objeto interagível à sua frente (erva, minério, baú...) e pode
--- desenhar uma placa de nome (nameplate) sobre ele. Essa placa é posicionada
--- pelo cliente no lugar exato do objeto em 3D, então basta ancorar o nosso
--- destaque (ícone grande + brilho pulsando) nela.
+-- posição de tela. O que existe é o "alvo de interação" (tecla Interagir):
+-- o jogo escolhe o objeto interagível à sua frente (erva, minério, baú...),
+-- expõe ele pelo token "softinteract" e, com as opções certas, desenha um
+-- ícone em cima do próprio objeto.
 --
--- Limitação: o jogo escolhe UM objeto por vez (o melhor à frente/no centro).
+-- O Farm Time:
+--   1. liga essas opções do jogo (ícone sobre objetos, inclusive ervas);
+--   2. quando o alvo de interação é uma erva/minério, mostra um alerta grande
+--      perto do centro da tela, com o ícone que o jogo usaria no cursor,
+--      o nome do nó e um som.
+-- Limitação: o jogo escolhe UM objeto por vez (o mais à frente).
 
 local _, FT = ...
 
 local UNIT = "softinteract"
 
--- Opções do jogo que fazem o soft target funcionar com objetos.
+-- Opções do jogo. Os nomes foram conferidos na interface do Classic 1.15.9;
+-- as que não existirem no seu cliente são ignoradas.
 local function DesiredCVars(db)
     return {
-        SoftTargetInteract          = "3", -- sempre ativo (teclado/mouse e controle)
-        SoftTargetInteractArc       = "1", -- arco à frente do personagem
-        SoftTargetInteractRange     = tostring(db.interactRange),
-        SoftTargetIconGameObject    = "1", -- ícone do jogo sobre objetos
+        SoftTargetInteract          = "3", -- Enum.SoftTargetEnableFlags.Any
         SoftTargetIconInteract      = "1",
-        SoftTargetNameplateInteract = "1", -- placa de nome sobre o objeto (onde ancoramos)
+        SoftTargetIconGameObject    = "1", -- ícone sobre objetos (desligado por padrão)
+        SoftTargetLowPriorityIcons  = "1", -- inclui objetos "de baixa prioridade" (desligado por padrão)
+        SoftTargetInteractRange     = tostring(db.interactRange),
     }
 end
 
@@ -49,9 +53,9 @@ end
 ---------------------------------------------------------------------------
 -- Visual
 ---------------------------------------------------------------------------
-local ICONS = {
-    herb  = "Interface\\Icons\\Trade_Herbalism",
-    ore   = "Interface\\Icons\\Trade_Mining",
+local FALLBACK_ICONS = {
+    herb  = "Interface\\Icons\\INV_Misc_Flower_02",
+    ore   = "Interface\\Icons\\INV_Pick_02",
     other = "Interface\\Icons\\INV_Misc_Gear_01",
 }
 local COLORS = {
@@ -60,34 +64,29 @@ local COLORS = {
     other = { 0.6, 0.8, 1.0 },
 }
 
-local marker = CreateFrame("Frame", "FarmTimeMarker", UIParent)
-marker:SetFrameStrata("LOW")
-marker:EnableMouse(false)
-marker:Hide()
+local alert = CreateFrame("Frame", "FarmTimeAlert", UIParent)
+alert:SetPoint("CENTER", UIParent, "CENTER", 0, 140)
+alert:SetFrameStrata("HIGH")
+alert:EnableMouse(false)
+alert:Hide()
 
-marker.glow = marker:CreateTexture(nil, "BACKGROUND")
-marker.glow:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
-marker.glow:SetBlendMode("ADD")
-marker.glow:SetPoint("CENTER")
+alert.glow = alert:CreateTexture(nil, "BACKGROUND")
+alert.glow:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
+alert.glow:SetBlendMode("ADD")
+alert.glow:SetPoint("CENTER")
 
-marker.icon = marker:CreateTexture(nil, "ARTWORK")
-marker.icon:SetAllPoints()
-marker.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+alert.icon = alert:CreateTexture(nil, "ARTWORK")
+alert.icon:SetAllPoints()
 
-marker.text = marker:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-marker.text:SetPoint("TOP", marker, "BOTTOM", 0, -4)
+alert.text = alert:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
+alert.text:SetPoint("TOP", alert, "BOTTOM", 0, -6)
 
-local pulse = marker:CreateAnimationGroup()
+local pulse = alert:CreateAnimationGroup()
 pulse:SetLooping("BOUNCE")
 local grow = pulse:CreateAnimation("Scale")
 grow:SetScale(1.25, 1.25)
-grow:SetDuration(0.6)
+grow:SetDuration(0.5)
 grow:SetSmoothing("IN_OUT")
-
--- Faixa com o nome do nó, logo abaixo do centro da tela.
-local banner = UIParent:CreateFontString("FarmTimeBanner", "OVERLAY", "GameFontNormalHuge")
-banner:SetPoint("CENTER", UIParent, "CENTER", 0, -120)
-banner:Hide()
 
 ---------------------------------------------------------------------------
 -- Lógica
@@ -96,67 +95,66 @@ local function IsSecret(v)
     return issecretvalue and issecretvalue(v)
 end
 
-local function CurrentGatherTarget()
+-- Lê o alvo de interação atual. Retorna guid, nome, tipo (ou nil).
+function FT:GetInteractTarget()
     if not UnitExists(UNIT) then return nil end
     local guid = UnitGUID(UNIT)
-    if not guid or IsSecret(guid) or not guid:find("^GameObject") then return nil end
+    if not guid or IsSecret(guid) then return nil end
     local name = UnitName(UNIT)
     if IsSecret(name) then name = nil end
-    local kind = FT:Classify(UNIT, name)
-    if FT.db.onlyGathering and kind == "other" then return nil end
-    return kind, name
+    return guid, name, self:Classify(name)
 end
 
-local function HideAll()
-    pulse:Stop()
-    marker:Hide()
-    banner:Hide()
-end
+local lastGUID
 
 function FT:RefreshHighlight()
     local db = self.db
-    if not db or not db.enabled then return HideAll() end
+    if not db then return end
 
-    local kind, name = CurrentGatherTarget()
-    if not kind then return HideAll() end
+    local guid, name, kind = self:GetInteractTarget()
+    local isObject = guid and guid:find("^GameObject")
+    local show = db.enabled and isObject and not (db.onlyGathering and kind == "other")
+
+    if not show then
+        pulse:Stop()
+        alert:Hide()
+        lastGUID = nil
+        return
+    end
 
     local c = COLORS[kind]
     local size = db.iconSize
 
-    -- Ícone sobre o objeto, ancorado na placa de nome que o jogo desenha nele.
-    local plate = C_NamePlate.GetNamePlateForUnit(UNIT)
-    if plate then
-        marker:ClearAllPoints()
-        marker:SetPoint("BOTTOM", plate, "TOP", 0, 4)
-        marker:SetSize(size, size)
-        marker.icon:SetTexture(ICONS[kind])
-        marker.glow:SetSize(size * 1.9, size * 1.9)
-        marker.glow:SetVertexColor(c[1], c[2], c[3])
-        marker.text:SetText(name or "")
-        marker.text:SetTextColor(c[1], c[2], c[3])
-        marker:Show()
-        if db.pulse then
-            if not pulse:IsPlaying() then pulse:Play() end
-        else
-            pulse:Stop()
-        end
+    alert:SetSize(size, size)
+    -- Ícone que o jogo usaria no cursor para esse objeto (luva de coleta, picareta...).
+    if not (SetUnitCursorTexture and SetUnitCursorTexture(alert.icon, UNIT)) then
+        alert.icon:SetTexture(FALLBACK_ICONS[kind])
+    end
+    alert.glow:SetSize(size * 1.9, size * 1.9)
+    alert.glow:SetVertexColor(c[1], c[2], c[3])
+    alert.text:SetText(name or "")
+    alert.text:SetTextColor(c[1], c[2], c[3])
+    alert:Show()
+
+    if db.pulse then
+        if not pulse:IsPlaying() then pulse:Play() end
     else
         pulse:Stop()
-        marker:Hide()
     end
 
-    if db.showBanner and name then
-        banner:SetText(name)
-        banner:SetTextColor(c[1], c[2], c[3])
-        banner:Show()
-    else
-        banner:Hide()
+    if guid ~= lastGUID and db.sound then
+        PlaySound(SOUNDKIT and SOUNDKIT.UI_SOFT_TARGET_INTERACT_AVAILABLE or 8959)
     end
+    lastGUID = guid
 end
 
 local function Refresh(self) self:RefreshHighlight() end
 
-FT:RegisterEvent("PLAYER_SOFT_INTERACT_CHANGED", Refresh)
-FT:RegisterEvent("NAME_PLATE_UNIT_ADDED", Refresh)
-FT:RegisterEvent("NAME_PLATE_UNIT_REMOVED", Refresh)
+FT:RegisterEvent("PLAYER_SOFT_INTERACT_CHANGED", function(self, oldGUID, newGUID)
+    if self.db and self.db.debug then
+        local guid, name, kind = self:GetInteractTarget()
+        self:Print("alvo de interação:", tostring(name), tostring(kind), tostring(guid))
+    end
+    self:RefreshHighlight()
+end)
 FT:RegisterEvent("PLAYER_ENTERING_WORLD", Refresh)

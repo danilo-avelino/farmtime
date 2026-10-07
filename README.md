@@ -1,16 +1,19 @@
 # Farm Time
 
-Add-on de World of Warcraft que deixa **a erva ou o minério que já está na sua
-frente** mais fácil de ver: um ícone grande, com brilho pulsando e o nome do nó,
-desenhado sobre o próprio objeto no mundo 3D. Não usa mapa nem minimapa.
+Add-on para **WoW Classic / WoW Forever** que deixa a erva ou o minério que
+está na sua frente mais fácil de notar. Quando o jogo escolhe uma erva ou um
+minério como alvo de interação, aparece um alerta grande perto do centro da
+tela (ícone pulsando + nome + som), e o próprio jogo passa a desenhar um ícone
+em cima do nó. Não usa mapa nem minimapa.
 
 ## Instalação (uso local)
 
-1. Copie a pasta `FarmTime/` para `World of Warcraft/_retail_/Interface/AddOns/`.
-2. No jogo, confira a versão da interface com
-   `/dump select(4, GetBuildInfo())` e, se for diferente, ajuste a linha
-   `## Interface:` em `FarmTime/FarmTime.toc` (ou marque "Carregar add-ons desatualizados").
-3. `/reload` e digite `/ft help`.
+1. Copie a pasta `FarmTime/` para `World of Warcraft/<versão>/Interface/AddOns/`
+   (a pasta do cliente que você usa para o Classic/Forever).
+2. No jogo, rode `/dump select(4, GetBuildInfo())`. Se o número for diferente de
+   `11509`, troque a linha `## Interface:` em `FarmTime/FarmTime.toc` (ou marque
+   "Carregar add-ons desatualizados" na tela de personagens).
+3. `/reload`. Deve aparecer `Farm Time: carregado` no chat. `/ft help` lista os comandos.
 
 ## Estrutura
 
@@ -18,38 +21,38 @@ desenhado sobre o próprio objeto no mundo 3D. Não usa mapa nem minimapa.
 |---|---|
 | `FarmTime.toc` | Metadados, SavedVariables (`FarmTimeDB`) e ordem de carregamento |
 | `Core.lua` | Configurações padrão, despacho de eventos, comandos `/ft` |
-| `Detection.lua` | Decide se o objeto é erva, minério ou outra coisa (tooltip + nomes aprendidos ao coletar) |
-| `Highlight.lua` | Liga o soft target de interação do jogo e ancora o destaque na placa de nome do objeto |
+| `Detection.lua` | Decide se o objeto é erva, minério ou outra coisa (listas do Classic + nomes aprendidos ao coletar) |
+| `Highlight.lua` | Liga as opções de alvo de interação do jogo e mostra o alerta |
 
 ## Como funciona
 
-A API de add-ons **não deixa** um add-on listar objetos do mundo (ervas,
-minérios) nem converter uma posição 3D em posição na tela. O que dá para usar é
-um recurso do próprio jogo: o **soft target de interação** (Opções → Controles →
-"Interagir com alvo"). Com ele, o cliente escolhe o objeto interagível à sua
-frente e pode desenhar uma placa de nome sobre ele. O Farm Time:
+A API de add-ons **não deixa** um add-on listar objetos do mundo nem converter
+uma posição 3D em posição na tela. O que dá para usar é a **tecla Interagir**
+do próprio jogo: ele escolhe o objeto interagível à sua frente e o expõe pelo
+token de unidade `softinteract`. O Farm Time:
 
-1. Liga as opções do jogo necessárias (`SoftTargetInteract`,
-   `SoftTargetNameplateInteract`, `SoftTargetIconGameObject`,
-   `SoftTargetInteractRange` etc.). Os valores originais ficam salvos e
-   `/ft restore` os devolve.
-2. Quando o alvo de interação muda (`PLAYER_SOFT_INTERACT_CHANGED`), lê o objeto
-   pelo token de unidade `softinteract` e classifica: erva, minério ou outro.
-3. Ancora um ícone grande e pulsante na placa de nome do objeto. Como a placa é
-   posicionada pelo próprio cliente, o ícone fica exatamente sobre o nó e
-   acompanha a câmera. Também mostra o nome do nó abaixo do centro da tela.
+1. Liga as opções do jogo (`SoftTargetInteract`, `SoftTargetIconGameObject`,
+   `SoftTargetLowPriorityIcons` etc.; os nomes foram conferidos na interface
+   oficial do Classic 1.15.9). Por padrão o jogo **não** mostra ícone sobre
+   objetos como ervas; com isso ligado, ele desenha. Os valores originais ficam
+   salvos e `/ft restore` os devolve.
+2. Quando o alvo de interação muda (`PLAYER_SOFT_INTERACT_CHANGED`), lê o nome
+   do objeto e classifica como erva, minério ou outro.
+3. Se for erva/minério, mostra o alerta com o ícone que o jogo usaria no cursor
+   (`SetUnitCursorTexture`) e toca um som.
+
+**Diagnóstico:** `/ft status` mostra a versão do cliente, as opções do jogo e o
+alvo de interação atual; `/ft debug` imprime cada mudança de alvo no chat.
 
 **Limitações**
 
-- O jogo escolhe **um objeto por vez** (o mais à frente/central). Não dá para
-  destacar todas as ervas visíveis ao mesmo tempo.
-- O alcance do soft target é limitado pelo cliente; `/ft range` pede mais, mas
-  o jogo pode reduzir.
-- A primeira vez que você vê um tipo de nó, a classificação depende do tooltip.
-  Se não funcionar, use `/ft all` para destacar qualquer objeto; depois de
-  coletar um nó, o nome dele fica gravado como erva/minério.
-- Em Midnight (12.x) algumas informações de unidades viram "secret values" em
-  combate; nesse caso o destaque simplesmente não aparece.
+- O jogo escolhe **um objeto por vez** (o mais à frente). Não dá para destacar
+  todas as ervas visíveis ao mesmo tempo.
+- O addon não consegue desenhar o próprio ícone em cima do nó: no Classic não
+  existe placa de nome para objetos. O ícone em cima do nó é o do jogo.
+- O alcance é o do jogo; `/ft range` pede mais, mas o cliente pode limitar.
+- A classificação usa nomes em inglês. Em outro idioma ou para nós novos do
+  Forever, use `/ft all` até coletar cada tipo uma vez (depois o nome fica gravado).
 
 ## Regras da Blizzard (ESP de recursos)
 
@@ -68,6 +71,5 @@ frente e pode desenhar uma placa de nome sobre ele. O Farm Time:
 
 ## Próximos passos sugeridos
 
-- Ícone específico por recurso (mapear nome do nó → item e usar `C_Item.GetItemIconByID`).
-- Painel de configurações (`Settings.RegisterCanvasLayoutCategory`).
-- Som curto quando um nó novo entra como alvo de interação.
+- Ícone específico por recurso (mapear nome do nó → item).
+- Painel de configurações e alerta arrastável.

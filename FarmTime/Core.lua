@@ -7,9 +7,10 @@ _G.FarmTime = FT
 FT.defaults = {
     enabled       = true,
     onlyGathering = true,  -- destacar só ervas/minérios (false = qualquer objeto interagível)
-    iconSize      = 64,    -- tamanho do ícone sobre o nó
+    iconSize      = 64,    -- tamanho do ícone do alerta
     pulse         = true,  -- animação de pulsar
-    showBanner    = true,  -- nome do nó abaixo do centro da tela
+    sound         = true,  -- som quando uma erva/minério vira alvo de interação
+    debug         = false, -- imprime no chat cada mudança de alvo de interação
     interactRange = 30,    -- alcance (jardas) do soft target de interação
     manageCVars   = true,  -- o addon liga as opções de soft target do jogo
     savedCVars    = {},    -- valores originais, para /ft restore
@@ -61,6 +62,7 @@ FT:RegisterEvent("ADDON_LOADED", function(self, name)
     -- Remove dados da versão 0.1 (HUD por posição), que não são mais usados.
     FarmTimeDB.nodes, FarmTimeDB.fov, FarmTimeDB.cameraHeight = nil, nil, nil
     FarmTimeDB.maxRange, FarmTimeDB.updateRate, FarmTimeDB.showEdgeArrows = nil, nil, nil
+    FarmTimeDB.showBanner = nil
     CopyDefaults(self.defaults, FarmTimeDB)
     self.db = FarmTimeDB
 end)
@@ -116,10 +118,28 @@ commands.pulse = function()
     FT:RefreshHighlight()
 end
 
-commands.banner = function()
-    FT.db.showBanner = not FT.db.showBanner
-    FT:Print("nome no centro da tela", FT.db.showBanner and "ligado" or "desligado")
-    FT:RefreshHighlight()
+commands.sound = function()
+    FT.db.sound = not FT.db.sound
+    FT:Print("som", FT.db.sound and "ligado" or "desligado")
+end
+
+commands.debug = function()
+    FT.db.debug = not FT.db.debug
+    FT:Print("debug", FT.db.debug and "ligado" or "desligado")
+end
+
+-- Diagnóstico: versão do cliente, opções do jogo e alvo de interação atual.
+commands.status = function()
+    local _, build, _, toc = GetBuildInfo()
+    FT:Print("cliente", build, "interface", toc)
+    local GetCVar = (C_CVar and C_CVar.GetCVar) or GetCVar
+    for _, cvar in ipairs({ "SoftTargetInteract", "SoftTargetIconInteract",
+        "SoftTargetIconGameObject", "SoftTargetLowPriorityIcons", "SoftTargetInteractRange" }) do
+        local ok, v = pcall(GetCVar, cvar)
+        print("  " .. cvar .. " = " .. tostring(ok and v or "(não existe)"))
+    end
+    local guid, name, kind = FT:GetInteractTarget()
+    print("  alvo de interação: " .. tostring(name) .. " / " .. tostring(kind) .. " / " .. tostring(guid))
 end
 
 commands.restore = function()
@@ -137,11 +157,13 @@ end
 commands.help = function()
     FT:Print("comandos:")
     print("  /ft               - liga/desliga o destaque")
-    print("  /ft size <px>     - tamanho do ícone sobre o nó")
+    print("  /ft size <px>     - tamanho do ícone do alerta")
     print("  /ft range <jd>    - alcance do soft target de interação")
     print("  /ft all           - alterna: só ervas/minérios ou qualquer objeto")
     print("  /ft pulse         - liga/desliga a animação")
-    print("  /ft banner        - liga/desliga o nome no centro da tela")
+    print("  /ft sound         - liga/desliga o som")
+    print("  /ft status        - mostra versão do cliente e opções do jogo")
+    print("  /ft debug         - imprime cada mudança de alvo de interação")
     print("  /ft restore       - devolve as opções de soft target originais")
     print("  /ft apply         - reaplica as opções de soft target do Farm Time")
 end
