@@ -95,13 +95,26 @@ local function IsSecret(v)
     return issecretvalue and issecretvalue(v)
 end
 
+local eventGUID -- GUID recebido no último PLAYER_SOFT_INTERACT_CHANGED
+
+local function Safe(fn, ...)
+    if not fn then return nil end
+    local ok, a = pcall(fn, ...)
+    if ok and not IsSecret(a) then return a end
+end
+
+-- Placa de nome que o jogo desenha sobre o alvo de interação (se existir).
+local function GetInteractPlate()
+    return C_NamePlate and Safe(C_NamePlate.GetNamePlateForUnit, UNIT)
+end
+
 -- Lê o alvo de interação atual. Retorna guid, nome, tipo (ou nil).
+-- UnitExists() costuma ser falso para objetos (não são unidades), então não
+-- dependemos dele: usamos o GUID do token ou o que veio no evento.
 function FT:GetInteractTarget()
-    if not UnitExists(UNIT) then return nil end
-    local guid = UnitGUID(UNIT)
-    if not guid or IsSecret(guid) then return nil end
-    local name = UnitName(UNIT)
-    if IsSecret(name) then name = nil end
+    local guid = Safe(UnitGUID, UNIT) or eventGUID
+    if not guid then return nil end
+    local name = Safe(UnitName, UNIT)
     return guid, name, self:Classify(name)
 end
 
@@ -121,6 +134,14 @@ local function ShowAlert(kind, name, unit)
     alert.glow:SetVertexColor(c[1], c[2], c[3])
     alert.text:SetText(name or "")
     alert.text:SetTextColor(c[1], c[2], c[3])
+    -- Prende o ícone em cima do próprio nó quando o jogo desenha uma placa nele;
+    -- senão, fica fixo acima do centro da tela.
+    local plate = db.anchorToNode and unit and GetInteractPlate()
+    alert:ClearAllPoints()
+    if not (plate and pcall(alert.SetPoint, alert, "BOTTOM", plate, "TOP", 0, db.nodeOffset)) then
+        alert:ClearAllPoints()
+        alert:SetPoint("CENTER", UIParent, "CENTER", 0, 140)
+    end
     alert:Show()
 
     if db.pulse then
@@ -143,7 +164,8 @@ function FT:RefreshHighlight()
 
     local guid, name, kind = self:GetInteractTarget()
     local isObject = guid and guid:find("^GameObject")
-    local show = db.enabled and isObject and not (db.onlyGathering and kind == "other")
+    -- Sem nome não dá para classificar; nesse caso mostra mesmo assim.
+    local show = db.enabled and isObject and not (db.onlyGathering and name and kind == "other")
 
     if not show then
         HideAlert()
@@ -172,10 +194,15 @@ end
 local function Refresh(self) self:RefreshHighlight() end
 
 FT:RegisterEvent("PLAYER_SOFT_INTERACT_CHANGED", function(self, oldGUID, newGUID)
+    eventGUID = (not IsSecret(newGUID)) and newGUID or nil
     if self.db and self.db.debug then
         local guid, name, kind = self:GetInteractTarget()
-        self:Print("alvo de interação:", tostring(name), tostring(kind), tostring(guid))
+        self:Print(string.format("alvo: %s | %s | %s | existe=%s | placa=%s",
+            tostring(name), tostring(kind), tostring(guid),
+            tostring(Safe(UnitExists, UNIT)), tostring(GetInteractPlate() ~= nil)))
     end
     self:RefreshHighlight()
 end)
+-- A placa às vezes aparece um instante depois do evento.
+FT:RegisterEvent("NAME_PLATE_UNIT_ADDED", Refresh)
 FT:RegisterEvent("PLAYER_ENTERING_WORLD", Refresh)

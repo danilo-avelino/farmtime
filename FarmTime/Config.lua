@@ -10,7 +10,7 @@ local ICON = "Interface\\Icons\\INV_Misc_Flower_02"
 -- Painel
 ---------------------------------------------------------------------------
 local panel = CreateFrame("Frame", "FarmTimeConfig", UIParent, "BasicFrameTemplateWithInset")
-panel:SetSize(320, 400)
+panel:SetSize(340, 430)
 panel:SetPoint("CENTER")
 panel:SetFrameStrata("DIALOG")
 panel:SetMovable(true)
@@ -88,6 +88,7 @@ end
 AddCheckbox("enabled",       "Ativar destaque")
 AddCheckbox("onlyGathering", "Só ervas e minérios")
 AddCheckbox("pulse",         "Animação de pulsar")
+AddCheckbox("anchorToNode",  "Ícone em cima do nó (senão, no centro da tela)")
 AddCheckbox("sound",         "Som ao encontrar um nó")
 AddCheckbox("manageCVars",   "Ligar ícones de interação do jogo")
 AddCheckbox("debug",         "Debug no chat")

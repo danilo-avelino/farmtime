@@ -9,6 +9,8 @@ FT.defaults = {
     onlyGathering = true,  -- destacar só ervas/minérios (false = qualquer objeto interagível)
     iconSize      = 64,    -- tamanho do ícone do alerta
     pulse         = true,  -- animação de pulsar
+    anchorToNode  = true,  -- prender o ícone em cima do nó (placa do jogo), se existir
+    nodeOffset    = 10,    -- distância (px) entre a placa do jogo e o ícone
     sound         = true,  -- som quando uma erva/minério vira alvo de interação
     debug         = false, -- imprime no chat cada mudança de alvo de interação
     interactRange = 30,    -- alcance (jardas) do soft target de interação
