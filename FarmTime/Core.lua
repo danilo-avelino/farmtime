@@ -15,6 +15,7 @@ FT.defaults = {
     manageCVars   = true,  -- o addon liga as opções de soft target do jogo
     savedCVars    = {},    -- valores originais, para /ft restore
     names         = {},    -- [nome do nó] = "herb" | "ore" (aprendido ao coletar)
+    minimap       = { hide = false, angle = 215 }, -- botão no minimapa
 }
 
 local function CopyDefaults(src, dst)
@@ -38,22 +39,36 @@ end
 local frame = CreateFrame("Frame")
 FT.handlers = {}
 
+-- Registrar um evento que não existe nesse cliente gera erro e interromperia o
+-- carregamento do arquivo; com pcall o addon só avisa e continua.
+local function SafeRegister(method, event, ...)
+    local ok, err = pcall(frame[method], frame, event, ...)
+    if not ok then
+        FT.missingEvents = FT.missingEvents or {}
+        table.insert(FT.missingEvents, event)
+    end
+    return ok
+end
+
 function FT:RegisterEvent(event, fn)
     self.handlers[event] = self.handlers[event] or {}
     table.insert(self.handlers[event], fn)
-    frame:RegisterEvent(event)
+    SafeRegister("RegisterEvent", event)
 end
 
 function FT:RegisterUnitEvent(event, unit, fn)
     self.handlers[event] = self.handlers[event] or {}
     table.insert(self.handlers[event], fn)
-    frame:RegisterUnitEvent(event, unit)
+    SafeRegister("RegisterUnitEvent", event, unit)
 end
 
 frame:SetScript("OnEvent", function(_, event, ...)
     local list = FT.handlers[event]
     if not list then return end
-    for _, fn in ipairs(list) do fn(FT, ...) end
+    for _, fn in ipairs(list) do
+        local ok, err = pcall(fn, FT, ...)
+        if not ok then FT:Print("erro em " .. event .. ": " .. tostring(err)) end
+    end
 end)
 
 FT:RegisterEvent("ADDON_LOADED", function(self, name)
@@ -69,7 +84,10 @@ end)
 
 FT:RegisterEvent("PLAYER_LOGIN", function(self)
     if self.db.manageCVars then self:ApplyCVars() end
-    self:Print("carregado. Digite /ft help para os comandos.")
+    self:Print("carregado. Clique no ícone do minimapa ou digite /ft help.")
+    if self.missingEvents then
+        self:Print("eventos que não existem neste cliente: " .. table.concat(self.missingEvents, ", "))
+    end
 end)
 
 ---------------------------------------------------------------------------
@@ -77,86 +95,98 @@ end)
 ---------------------------------------------------------------------------
 local commands = {}
 
-commands[""] = function()
-    FT.db.enabled = not FT.db.enabled
-    FT:Print(FT.db.enabled and "ativado" or "desativado")
-    FT:RefreshHighlight()
+-- Muda uma opção e aplica o efeito. Usado pelos comandos e pelo painel.
+function FT:SetOption(key, value)
+    self.db[key] = value
+    if key == "interactRange" then
+        if self.db.manageCVars then self:ApplyCVars() end
+    elseif key == "manageCVars" then
+        if value then self:ApplyCVars() else self:RestoreCVars() end
+    end
+    self:RefreshHighlight()
+    if self.RefreshConfig then self:RefreshConfig() end
 end
 
-commands.size = function(arg)
-    local v = tonumber(arg)
-    if v and v >= 16 and v <= 160 then
-        FT.db.iconSize = v
-        FT:Print("tamanho do ícone =", v)
-        FT:RefreshHighlight()
-    else
-        FT:Print("uso: /ft size <16-160>  (atual:", FT.db.iconSize .. ")")
+local function Toggle(key, label)
+    return function()
+        FT:SetOption(key, not FT.db[key])
+        FT:Print(label, FT.db[key] and "ligado" or "desligado")
     end
 end
 
-commands.range = function(arg)
-    local v = tonumber(arg)
-    if v and v >= 5 and v <= 60 then
-        FT.db.interactRange = v
-        FT:ApplyCVars()
-        FT:Print("alcance =", v, "jardas (o jogo pode limitar a um valor menor)")
-    else
-        FT:Print("uso: /ft range <5-60>  (atual:", FT.db.interactRange .. ")")
+local function Number(key, label, lo, hi)
+    return function(arg)
+        local v = tonumber(arg)
+        if v and v >= lo and v <= hi then
+            FT:SetOption(key, v)
+            FT:Print(label, "=", v)
+        else
+            FT:Print(string.format("uso: %d-%d (atual: %s)", lo, hi, tostring(FT.db[key])))
+        end
     end
 end
 
-commands.all = function()
-    FT.db.onlyGathering = not FT.db.onlyGathering
+commands[""]    = function() FT:ToggleConfig() end
+commands.config = commands[""]
+commands.toggle = Toggle("enabled", "destaque")
+commands.size   = Number("iconSize", "tamanho do ícone", 16, 160)
+commands.range  = Number("interactRange", "alcance (o jogo pode limitar)", 5, 60)
+commands.all    = function()
+    FT:SetOption("onlyGathering", not FT.db.onlyGathering)
     FT:Print(FT.db.onlyGathering and "destacando só ervas e minérios"
         or "destacando qualquer objeto interagível")
-    FT:RefreshHighlight()
 end
-
-commands.pulse = function()
-    FT.db.pulse = not FT.db.pulse
-    FT:Print("pulsar", FT.db.pulse and "ligado" or "desligado")
-    FT:RefreshHighlight()
-end
-
-commands.sound = function()
-    FT.db.sound = not FT.db.sound
-    FT:Print("som", FT.db.sound and "ligado" or "desligado")
-end
-
-commands.debug = function()
-    FT.db.debug = not FT.db.debug
-    FT:Print("debug", FT.db.debug and "ligado" or "desligado")
+commands.pulse  = Toggle("pulse", "pulsar")
+commands.sound  = Toggle("sound", "som")
+commands.debug  = Toggle("debug", "debug")
+commands.minimap = function()
+    FT.db.minimap.hide = not FT.db.minimap.hide
+    FT:UpdateMinimapButton()
+    FT:Print("botão do minimapa", FT.db.minimap.hide and "escondido" or "visível")
 end
 
 -- Diagnóstico: versão do cliente, opções do jogo e alvo de interação atual.
+-- Cada parte roda separada, para que uma falha não esconda o resto.
 commands.status = function()
-    local _, build, _, toc = GetBuildInfo()
-    FT:Print("cliente", build, "interface", toc)
-    local GetCVar = (C_CVar and C_CVar.GetCVar) or GetCVar
+    local ok, err = pcall(function()
+        local version, build, _, toc = GetBuildInfo()
+        FT:Print("cliente", tostring(version), tostring(build), "interface", tostring(toc))
+    end)
+    if not ok then FT:Print("versão: erro", tostring(err)) end
+
+    local getter = (C_CVar and C_CVar.GetCVar) or GetCVar
     for _, cvar in ipairs({ "SoftTargetInteract", "SoftTargetIconInteract",
         "SoftTargetIconGameObject", "SoftTargetLowPriorityIcons", "SoftTargetInteractRange" }) do
-        local ok, v = pcall(GetCVar, cvar)
-        print("  " .. cvar .. " = " .. tostring(ok and v or "(não existe)"))
+        local okc, v = pcall(getter, cvar)
+        print("  " .. cvar .. " = " .. (okc and v ~= nil and tostring(v) or "(não existe)"))
     end
-    local guid, name, kind = FT:GetInteractTarget()
-    print("  alvo de interação: " .. tostring(name) .. " / " .. tostring(kind) .. " / " .. tostring(guid))
+
+    local okt, guid, name, kind = pcall(FT.GetInteractTarget, FT)
+    if okt then
+        print("  alvo de interação: " .. tostring(name) .. " / " .. tostring(kind) .. " / " .. tostring(guid))
+    else
+        print("  alvo de interação: erro " .. tostring(guid))
+    end
+    if FT.missingEvents then
+        print("  eventos ausentes: " .. table.concat(FT.missingEvents, ", "))
+    end
 end
 
 commands.restore = function()
-    FT:RestoreCVars()
-    FT.db.manageCVars = false
-    FT:Print("opções de soft target restauradas. Use /ft apply para religar.")
+    FT:SetOption("manageCVars", false)
+    FT:Print("opções do jogo restauradas. Use /ft apply para religar.")
 end
 
 commands.apply = function()
-    FT.db.manageCVars = true
-    FT:ApplyCVars()
-    FT:Print("opções de soft target aplicadas.")
+    FT:SetOption("manageCVars", true)
+    FT:Print("opções do jogo aplicadas.")
 end
 
 commands.help = function()
     FT:Print("comandos:")
-    print("  /ft               - liga/desliga o destaque")
+    print("  /ft               - abre/fecha o painel de configurações")
+    print("  /ft toggle        - liga/desliga o destaque")
+    print("  /ft minimap       - mostra/esconde o botão do minimapa")
     print("  /ft size <px>     - tamanho do ícone do alerta")
     print("  /ft range <jd>    - alcance do soft target de interação")
     print("  /ft all           - alterna: só ervas/minérios ou qualquer objeto")
@@ -173,5 +203,6 @@ SLASH_FARMTIME2 = "/ft"
 SlashCmdList.FARMTIME = function(msg)
     local cmd, arg = (msg or ""):lower():match("^%s*(%S*)%s*(.-)%s*$")
     local fn = commands[cmd] or commands.help
-    fn(arg)
+    local ok, err = pcall(fn, arg)
+    if not ok then FT:Print("erro no comando '" .. cmd .. "': " .. tostring(err)) end
 end

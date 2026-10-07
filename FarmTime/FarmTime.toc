@@ -1,11 +1,12 @@
-## Interface: 11509
+## Interface: 16001, 11509
 ## Title: Farm Time
 ## Notes: Alerta grande quando a erva ou minério à sua frente vira alvo de interação.
 ## Author: Danilo Avelino
-## Version: 0.3.0
+## Version: 0.4.0
 ## SavedVariables: FarmTimeDB
-## IconTexture: Interface\Icons\Trade_Herbalism
+## IconTexture: Interface\Icons\INV_Misc_Flower_02
 
 Core.lua
 Detection.lua
 Highlight.lua
+Config.lua

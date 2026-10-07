@@ -107,27 +107,14 @@ end
 
 local lastGUID
 
-function FT:RefreshHighlight()
-    local db = self.db
-    if not db then return end
-
-    local guid, name, kind = self:GetInteractTarget()
-    local isObject = guid and guid:find("^GameObject")
-    local show = db.enabled and isObject and not (db.onlyGathering and kind == "other")
-
-    if not show then
-        pulse:Stop()
-        alert:Hide()
-        lastGUID = nil
-        return
-    end
-
+local function ShowAlert(kind, name, unit)
+    local db = FT.db
     local c = COLORS[kind]
     local size = db.iconSize
 
     alert:SetSize(size, size)
     -- Ícone que o jogo usaria no cursor para esse objeto (luva de coleta, picareta...).
-    if not (SetUnitCursorTexture and SetUnitCursorTexture(alert.icon, UNIT)) then
+    if not (unit and SetUnitCursorTexture and SetUnitCursorTexture(alert.icon, unit)) then
         alert.icon:SetTexture(FALLBACK_ICONS[kind])
     end
     alert.glow:SetSize(size * 1.9, size * 1.9)
@@ -141,11 +128,45 @@ function FT:RefreshHighlight()
     else
         pulse:Stop()
     end
+end
 
+local function HideAlert()
+    pulse:Stop()
+    alert:Hide()
+end
+
+local testing = false
+
+function FT:RefreshHighlight()
+    local db = self.db
+    if not db or testing then return end
+
+    local guid, name, kind = self:GetInteractTarget()
+    local isObject = guid and guid:find("^GameObject")
+    local show = db.enabled and isObject and not (db.onlyGathering and kind == "other")
+
+    if not show then
+        HideAlert()
+        lastGUID = nil
+        return
+    end
+
+    ShowAlert(kind, name, UNIT)
     if guid ~= lastGUID and db.sound then
         PlaySound(SOUNDKIT and SOUNDKIT.UI_SOFT_TARGET_INTERACT_AVAILABLE or 8959)
     end
     lastGUID = guid
+end
+
+-- Mostra o alerta por 3 segundos, para ajustar tamanho/posição sem precisar de uma erva.
+function FT:ShowTestAlert()
+    testing = true
+    ShowAlert("herb", "Mageroyal (teste)")
+    C_Timer.After(3, function()
+        testing = false
+        HideAlert()
+        FT:RefreshHighlight()
+    end)
 end
 
 local function Refresh(self) self:RefreshHighlight() end
