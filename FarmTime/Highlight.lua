@@ -158,6 +158,69 @@ function FT:GetInteractTarget()
     return guid, name, self:Classify(name)
 end
 
+---------------------------------------------------------------------------
+-- Esconder o nome/ícone que o jogo desenha sobre o nó
+--
+-- O nome vem da placa de nome do jogo (Blizzard ou Plater). Procuramos dentro
+-- dela o texto igual ao nome do nó e o ícone de interação, e zeramos o alpha.
+-- As placas são recicladas pelo jogo, então tudo é restaurado quando o alvo
+-- muda ou a placa some.
+---------------------------------------------------------------------------
+local hidden = {}  -- [região] = alpha original
+local hooked = {}
+
+local function HideRegion(region)
+    if not region or not region.SetAlpha or hidden[region] then return end
+    hidden[region] = region:GetAlpha()
+    region:SetAlpha(0)
+    -- Se a placa tentar mostrar de novo, volta a esconder enquanto for o nosso alvo.
+    if not hooked[region] then
+        hooked[region] = true
+        hooksecurefunc(region, "SetAlpha", function(self, a)
+            if hidden[self] and a ~= 0 then self:SetAlpha(0) end
+        end)
+    end
+end
+
+local function RestoreRegions()
+    for region, alpha in pairs(hidden) do
+        hidden[region] = nil
+        pcall(region.SetAlpha, region, alpha)
+    end
+end
+
+-- Procura textos com o nome do nó (até 4 níveis de profundidade).
+local function HideMatchingText(frame, name, depth)
+    if not frame or depth > 4 then return end
+    if frame.GetRegions then
+        for _, r in ipairs({ frame:GetRegions() }) do
+            if r.GetObjectType and r:GetObjectType() == "FontString" then
+                local ok, text = pcall(r.GetText, r)
+                if ok and text == name then HideRegion(r) end
+            end
+        end
+    end
+    if frame.GetChildren then
+        for _, child in ipairs({ frame:GetChildren() }) do
+            HideMatchingText(child, name, depth + 1)
+        end
+    end
+end
+
+local function HideGameLabel(plate, name)
+    local blizz = plate.UnitFrame
+    if blizz then
+        HideRegion(blizz.name)
+        HideRegion(blizz.SoftTargetFrame) -- ícone de interação do jogo
+    end
+    local plater = plate.unitFrame
+    if plater then
+        HideRegion(plater.ActorNameSpecial)
+        if plater.healthBar then HideRegion(plater.healthBar.unitName) end
+    end
+    if name then HideMatchingText(plate, name, 0) end
+end
+
 local lastGUID
 
 local function ShowAlert(kind, name, unit)
@@ -189,7 +252,12 @@ local function ShowAlert(kind, name, unit)
 
     -- Prende o ícone em cima do próprio nó quando o jogo desenha uma placa nele;
     -- senão, fica fixo acima do centro da tela.
-    local plate = db.anchorToNode and unit and GetInteractPlate()
+    local plate = unit and GetInteractPlate()
+    RestoreRegions()
+    if plate and db.hideGameName then
+        pcall(HideGameLabel, plate, name)
+    end
+    if not db.anchorToNode then plate = nil end
     alert:ClearAllPoints()
     if not (plate and pcall(alert.SetPoint, alert, "BOTTOM", plate, "TOP", 0, db.nodeOffset)) then
         alert:ClearAllPoints()
@@ -207,6 +275,7 @@ end
 local function HideAlert()
     pulse:Stop()
     alert:Hide()
+    RestoreRegions()
 end
 
 local testing = false
@@ -258,4 +327,8 @@ FT:RegisterEvent("PLAYER_SOFT_INTERACT_CHANGED", function(self, oldGUID, newGUID
 end)
 -- A placa às vezes aparece um instante depois do evento.
 FT:RegisterEvent("NAME_PLATE_UNIT_ADDED", Refresh)
+FT:RegisterEvent("NAME_PLATE_UNIT_REMOVED", function(self)
+    RestoreRegions() -- a placa vai ser reciclada para outra unidade
+    self:RefreshHighlight()
+end)
 FT:RegisterEvent("PLAYER_ENTERING_WORLD", Refresh)

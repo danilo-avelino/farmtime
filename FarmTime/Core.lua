@@ -11,6 +11,7 @@ FT.defaults = {
     pulse         = false, -- animação de pulsar
     anchorToNode  = true,  -- prender o ícone em cima do nó (placa do jogo), se existir
     nodeOffset    = 10,    -- distância (px) entre a placa do jogo e o ícone
+    hideGameName  = true,  -- esconde o nome/ícone que o jogo desenha sobre o nó
     sound         = true,  -- som quando uma erva/minério vira alvo de interação
     debug         = false, -- imprime no chat cada mudança de alvo de interação
     interactRange = 30,    -- alcance (jardas) do soft target de interação

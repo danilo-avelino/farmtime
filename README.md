@@ -69,8 +69,9 @@ alvo de interação atual; `/ft debug` imprime cada mudança de alvo no chat.
 - O jogo só escolhe o alvo de interação **de perto** (poucas jardas), mesmo com
   `/ft range` maior.
 - No WoW Forever o jogo desenha uma placa com o nome sobre o nó; o Farm Time
-  prende o ícone grande nela. Se a placa não existir, o alerta fica fixo acima
-  do centro da tela.
+  prende a sua placa nela e esconde o nome/ícone do jogo (opção "Esconder o
+  nome do jogo sobre o nó"), restaurando quando o alvo muda. Se a placa não
+  existir, o alerta fica fixo acima do centro da tela.
 - O alcance é o do jogo; `/ft range` pede mais, mas o cliente pode limitar.
 - A classificação usa nomes em inglês. Em outro idioma ou para nós novos do
   Forever, use `/ft all` até coletar cada tipo uma vez (depois o nome fica gravado).
