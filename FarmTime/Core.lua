@@ -8,7 +8,7 @@ FT.defaults = {
     enabled       = true,
     onlyGathering = true,  -- destacar só ervas/minérios (false = qualquer objeto interagível)
     iconSize      = 64,    -- tamanho do ícone do alerta
-    pulse         = true,  -- animação de pulsar
+    pulse         = false, -- animação de pulsar
     anchorToNode  = true,  -- prender o ícone em cima do nó (placa do jogo), se existir
     nodeOffset    = 10,    -- distância (px) entre a placa do jogo e o ícone
     sound         = true,  -- som quando uma erva/minério vira alvo de interação
@@ -18,6 +18,10 @@ FT.defaults = {
     savedCVars    = {},    -- valores originais, para /ft restore
     names         = {},    -- [nome do nó] = "herb" | "ore" (aprendido ao coletar)
     minimap       = { hide = false, angle = 215 }, -- botão no minimapa
+    bindInteractKey = true, -- liga a tecla abaixo ao "Interagir com o alvo"
+    interactKey   = "F",
+    savedBinding  = {},    -- o que a tecla fazia antes, para devolver
+    nodeIcons     = {},    -- [nome do nó] = ícone do item coletado (aprendido)
 }
 
 local function CopyDefaults(src, dst)
@@ -80,6 +84,9 @@ FT:RegisterEvent("ADDON_LOADED", function(self, name)
     FarmTimeDB.nodes, FarmTimeDB.fov, FarmTimeDB.cameraHeight = nil, nil, nil
     FarmTimeDB.maxRange, FarmTimeDB.updateRate, FarmTimeDB.showEdgeArrows = nil, nil, nil
     FarmTimeDB.showBanner = nil
+    -- 0.6: o pulsar passou a vir desligado.
+    if (FarmTimeDB.schema or 0) < 6 then FarmTimeDB.pulse = false end
+    FarmTimeDB.schema = 6
     CopyDefaults(self.defaults, FarmTimeDB)
     self.db = FarmTimeDB
 end)
@@ -104,6 +111,8 @@ function FT:SetOption(key, value)
         if self.db.manageCVars then self:ApplyCVars() end
     elseif key == "manageCVars" then
         if value then self:ApplyCVars() else self:RestoreCVars() end
+    elseif key == "bindInteractKey" then
+        if value then self:ApplyKeybind() else self:RestoreKeybind() end
     end
     self:RefreshHighlight()
     if self.RefreshConfig then self:RefreshConfig() end
@@ -139,6 +148,7 @@ commands.all    = function()
         or "destacando qualquer objeto interagível")
 end
 commands.pulse  = Toggle("pulse", "pulsar")
+commands.key    = Toggle("bindInteractKey", "tecla " .. FT.defaults.interactKey .. " para coletar")
 commands.sound  = Toggle("sound", "som")
 commands.debug  = Toggle("debug", "debug")
 commands.minimap = function()
@@ -193,6 +203,7 @@ commands.help = function()
     print("  /ft range <jd>    - alcance do soft target de interação")
     print("  /ft all           - alterna: só ervas/minérios ou qualquer objeto")
     print("  /ft pulse         - liga/desliga a animação")
+    print("  /ft key           - liga/desliga a tecla F para coletar")
     print("  /ft sound         - liga/desliga o som")
     print("  /ft status        - mostra versão do cliente e opções do jogo")
     print("  /ft debug         - imprime cada mudança de alvo de interação")

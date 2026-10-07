@@ -26,6 +26,39 @@ local ORES = {
     "Small Obsidian Chunk", "Large Obsidian Chunk",
 }
 
+-- Item que cada nó dá, para mostrar o ícone do próprio recurso.
+local NODE_ITEMS = {
+    ["Peacebloom"] = 2447, ["Silverleaf"] = 765, ["Earthroot"] = 2449,
+    ["Mageroyal"] = 785, ["Briarthorn"] = 2450, ["Stranglekelp"] = 3820,
+    ["Bruiseweed"] = 2453, ["Wild Steelbloom"] = 3355, ["Grave Moss"] = 3369,
+    ["Kingsblood"] = 3356, ["Liferoot"] = 3357, ["Fadeleaf"] = 3818,
+    ["Goldthorn"] = 3821, ["Khadgar's Whisker"] = 3358, ["Wintersbite"] = 3819,
+    ["Firebloom"] = 4625, ["Purple Lotus"] = 8831, ["Arthas' Tears"] = 8836,
+    ["Sungrass"] = 8838, ["Blindweed"] = 8839, ["Ghost Mushroom"] = 8845,
+    ["Gromsblood"] = 8846, ["Golden Sansam"] = 13464, ["Dreamfoil"] = 13463,
+    ["Mountain Silversage"] = 13465, ["Plaguebloom"] = 13466, ["Icecap"] = 13467,
+    ["Black Lotus"] = 13468,
+    ["Copper Vein"] = 2770, ["Tin Vein"] = 2771, ["Silver Vein"] = 2775,
+    ["Iron Deposit"] = 2772, ["Gold Vein"] = 2776, ["Mithril Deposit"] = 3858,
+    ["Truesilver Deposit"] = 7911, ["Dark Iron Deposit"] = 11370,
+    ["Small Thorium Vein"] = 10620, ["Rich Thorium Vein"] = 10620,
+    ["Hakkari Thorium Vein"] = 10620, ["Incendicite Mineral Vein"] = 3340,
+    ["Indurium Mineral Vein"] = 5833, ["Lesser Bloodstone Deposit"] = 4278,
+}
+
+local GetItemIconByID = (C_Item and C_Item.GetItemIconByID) or GetItemIcon
+
+-- Ícone do recurso do nó: tabela de itens > aprendido na coleta > nil.
+function FT:GetNodeIcon(name)
+    if not name then return nil end
+    local itemID = NODE_ITEMS[name] or NODE_ITEMS[(name:gsub("^Ooze Covered ", ""))]
+    if itemID and GetItemIconByID then
+        local ok, icon = pcall(GetItemIconByID, itemID)
+        if ok and icon then return icon end
+    end
+    return self.db.nodeIcons[name]
+end
+
 local known = {}
 for _, n in ipairs(HERBS) do known[n] = "herb" end
 for _, n in ipairs(ORES) do known[n] = "ore" end
@@ -58,11 +91,26 @@ end
 ---------------------------------------------------------------------------
 -- Aprendizado: grava o nome de cada nó coletado
 ---------------------------------------------------------------------------
+local lastGather -- { name =, time = } da última coleta iniciada
+
 FT:RegisterUnitEvent("UNIT_SPELLCAST_SENT", "player", function(self, unit, target, castGUID, spellID)
     local spellName = spellID and GetSpellName(spellID)
     local kind = spellName and spellNameToKind[spellName]
-    if kind and target and target ~= "" and self.db.names[target] ~= kind then
+    if not (kind and target and target ~= "") then return end
+    lastGather = { name = target, time = GetTime() }
+    if self.db.names[target] ~= kind then
         self.db.names[target] = kind
         self:RefreshHighlight()
     end
+end)
+
+-- Ao abrir o saque de uma coleta, grava o ícone do primeiro item como ícone do
+-- nó. Assim ervas/minérios novos (do Forever ou em outro idioma) ganham ícone.
+FT:RegisterEvent("LOOT_OPENED", function(self)
+    if not lastGather or GetTime() - lastGather.time > 10 then return end
+    local name = lastGather.name
+    lastGather = nil
+    if self.db.nodeIcons[name] then return end
+    local ok, icon = pcall(GetLootSlotInfo, 1)
+    if ok and icon then self.db.nodeIcons[name] = icon end
 end)

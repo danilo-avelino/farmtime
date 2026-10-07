@@ -24,6 +24,11 @@ em cima do nó. Não usa mapa nem minimapa.
 - **Painel:** liga/desliga o destaque, filtro só ervas/minérios, pulsar, som,
   ícones de interação do jogo, debug, tamanho do ícone e alcance. Os botões
   "Diagnóstico" (`/ft status`) e "Testar alerta" ficam no rodapé.
+- **Tecla F:** o addon liga o F ao comando "Interagir com o alvo"
+  (`INTERACTTARGET`), então apertar F coleta a erva/minério destacado. O que o F
+  fazia antes fica salvo; desmarcar a opção no painel (ou `/ft key`) devolve.
+- **Ícone:** mostra o ícone do item do recurso (ex.: Kingsblood). Para nós que
+  não estão na tabela, o ícone é aprendido no primeiro saque.
 - **Comandos:** `/ft` abre o painel; `/ft help` lista os demais.
 
 ## Estrutura
@@ -34,6 +39,7 @@ em cima do nó. Não usa mapa nem minimapa.
 | `Core.lua` | Configurações padrão, despacho de eventos, comandos `/ft` |
 | `Detection.lua` | Decide se o objeto é erva, minério ou outra coisa (listas do Classic + nomes aprendidos ao coletar) |
 | `Highlight.lua` | Liga as opções de alvo de interação do jogo e mostra o alerta |
+| `Keybind.lua` | Liga a tecla F ao "Interagir com o alvo" e guarda o atalho anterior |
 | `Config.lua` | Painel de configurações e botão do minimapa (sem bibliotecas externas) |
 
 ## Como funciona
@@ -86,5 +92,4 @@ alvo de interação atual; `/ft debug` imprime cada mudança de alvo no chat.
 
 ## Próximos passos sugeridos
 
-- Ícone específico por recurso (mapear nome do nó → item).
 - Alerta arrastável (hoje a posição é fixa acima do centro da tela).

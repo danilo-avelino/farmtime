@@ -2,11 +2,12 @@
 ## Title: Farm Time
 ## Notes: Alerta grande quando a erva ou minério à sua frente vira alvo de interação.
 ## Author: Danilo Avelino
-## Version: 0.5.0
+## Version: 0.6.0
 ## SavedVariables: FarmTimeDB
 ## IconTexture: Interface\Icons\INV_Misc_Flower_02
 
 Core.lua
 Detection.lua
 Highlight.lua
+Keybind.lua
 Config.lua

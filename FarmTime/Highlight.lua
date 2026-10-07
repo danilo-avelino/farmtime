@@ -126,8 +126,14 @@ local function ShowAlert(kind, name, unit)
     local size = db.iconSize
 
     alert:SetSize(size, size)
-    -- Ícone que o jogo usaria no cursor para esse objeto (luva de coleta, picareta...).
-    if not (unit and SetUnitCursorTexture and SetUnitCursorTexture(alert.icon, unit)) then
+    -- Ícone do próprio recurso (ex.: Kingsblood); se não souber, o ícone que o
+    -- jogo usaria no cursor (luva de coleta, picareta...); por último, um genérico.
+    local itemIcon = FT:GetNodeIcon(name)
+    alert.icon:SetTexCoord(0, 1, 0, 1)
+    if itemIcon then
+        alert.icon:SetTexture(itemIcon)
+        alert.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+    elseif not (unit and SetUnitCursorTexture and SetUnitCursorTexture(alert.icon, unit)) then
         alert.icon:SetTexture(FALLBACK_ICONS[kind])
     end
     alert.glow:SetSize(size * 1.9, size * 1.9)
@@ -183,7 +189,7 @@ end
 -- Mostra o alerta por 3 segundos, para ajustar tamanho/posição sem precisar de uma erva.
 function FT:ShowTestAlert()
     testing = true
-    ShowAlert("herb", "Mageroyal (teste)")
+    ShowAlert("herb", "Kingsblood")
     C_Timer.After(3, function()
         testing = false
         HideAlert()
