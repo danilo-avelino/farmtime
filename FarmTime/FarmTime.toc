@@ -1,8 +1,9 @@
 ## Interface: 16001, 11509
+## OptionalDeps: Auctionator
 ## Title: Farm Time
-## Notes: Alerta grande quando a erva ou minério à sua frente vira alvo de interação.
+## Notes: Destaca a erva/minério à frente, coleta com F, fast loot e janela da sessão com preços do Auctionator.
 ## Author: Danilo Avelino
-## Version: 0.8.0
+## Version: 0.9.0
 ## SavedVariables: FarmTimeDB
 ## IconTexture: Interface\Icons\INV_Misc_Flower_02
 
@@ -10,4 +11,6 @@ Core.lua
 Detection.lua
 Highlight.lua
 Keybind.lua
+Loot.lua
+Session.lua
 Config.lua

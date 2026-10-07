@@ -121,12 +121,6 @@ alert.sub:SetPoint("BOTTOMLEFT", alert.iconFrame, "BOTTOMRIGHT", 8, 2)
 alert.sub:SetJustifyH("LEFT")
 alert.sub:SetTextColor(0.75, 0.75, 0.75)
 
-local pulse = alert:CreateAnimationGroup()
-pulse:SetLooping("BOUNCE")
-local grow = pulse:CreateAnimation("Scale")
-grow:SetScale(1.25, 1.25)
-grow:SetDuration(0.5)
-grow:SetSmoothing("IN_OUT")
 
 ---------------------------------------------------------------------------
 -- Lógica
@@ -264,16 +258,9 @@ local function ShowAlert(kind, name, unit)
         alert:SetPoint("CENTER", UIParent, "CENTER", 0, 140)
     end
     alert:Show()
-
-    if db.pulse then
-        if not pulse:IsPlaying() then pulse:Play() end
-    else
-        pulse:Stop()
-    end
 end
 
 local function HideAlert()
-    pulse:Stop()
     alert:Hide()
     RestoreRegions()
 end

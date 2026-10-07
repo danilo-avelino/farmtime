@@ -8,7 +8,6 @@ FT.defaults = {
     enabled       = true,
     onlyGathering = true,  -- destacar só ervas/minérios (false = qualquer objeto interagível)
     iconSize      = 36,    -- tamanho do ícone na placa (a placa acompanha)
-    pulse         = false, -- animação de pulsar
     anchorToNode  = true,  -- prender o ícone em cima do nó (placa do jogo), se existir
     nodeOffset    = 10,    -- distância (px) entre a placa do jogo e o ícone
     hideGameName  = true,  -- esconde o nome/ícone que o jogo desenha sobre o nó
@@ -23,6 +22,8 @@ FT.defaults = {
     interactKey   = "F",
     savedBinding  = {},    -- o que a tecla fazia antes, para devolver
     nodeIcons     = {},    -- [nome do nó] = ícone do item coletado (aprendido)
+    fastLoot      = true,  -- pega todo o saque na hora (Shift segurado desativa)
+    sessionWindow = true,  -- janela da sessão abre sozinha ao coletar
 }
 
 local function CopyDefaults(src, dst)
@@ -84,9 +85,7 @@ FT:RegisterEvent("ADDON_LOADED", function(self, name)
     -- Remove dados da versão 0.1 (HUD por posição), que não são mais usados.
     FarmTimeDB.nodes, FarmTimeDB.fov, FarmTimeDB.cameraHeight = nil, nil, nil
     FarmTimeDB.maxRange, FarmTimeDB.updateRate, FarmTimeDB.showEdgeArrows = nil, nil, nil
-    FarmTimeDB.showBanner = nil
-    -- 0.6: o pulsar passou a vir desligado.
-    if (FarmTimeDB.schema or 0) < 6 then FarmTimeDB.pulse = false end
+    FarmTimeDB.showBanner, FarmTimeDB.pulse = nil, nil
     -- 0.7: visual de placa; o ícone ficou menor por padrão.
     if (FarmTimeDB.schema or 0) < 7 then FarmTimeDB.iconSize = nil end
     FarmTimeDB.schema = 7
@@ -150,9 +149,11 @@ commands.all    = function()
     FT:Print(FT.db.onlyGathering and "destacando só ervas e minérios"
         or "destacando qualquer objeto interagível")
 end
-commands.pulse  = Toggle("pulse", "pulsar")
 commands.key    = Toggle("bindInteractKey", "tecla " .. FT.defaults.interactKey .. " para coletar")
 commands.sound  = Toggle("sound", "som")
+commands.loot   = Toggle("fastLoot", "fast loot")
+commands.session = function() FT:ToggleSessionWindow() end
+commands.reset  = function() FT:ResetSession(); FT:Print("sessão zerada") end
 commands.debug  = Toggle("debug", "debug")
 commands.minimap = function()
     FT.db.minimap.hide = not FT.db.minimap.hide
@@ -205,9 +206,11 @@ commands.help = function()
     print("  /ft size <px>     - tamanho do ícone na placa")
     print("  /ft range <jd>    - alcance do soft target de interação")
     print("  /ft all           - alterna: só ervas/minérios ou qualquer objeto")
-    print("  /ft pulse         - liga/desliga a animação")
     print("  /ft key           - liga/desliga a tecla F para coletar")
     print("  /ft sound         - liga/desliga o som")
+    print("  /ft loot          - liga/desliga o fast loot")
+    print("  /ft session       - mostra/esconde a janela da sessão")
+    print("  /ft reset         - zera a sessão")
     print("  /ft status        - mostra versão do cliente e opções do jogo")
     print("  /ft debug         - imprime cada mudança de alvo de interação")
     print("  /ft restore       - devolve as opções de soft target originais")

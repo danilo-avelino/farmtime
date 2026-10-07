@@ -64,7 +64,7 @@ for _, n in ipairs(HERBS) do known[n] = "herb" end
 for _, n in ipairs(ORES) do known[n] = "ore" end
 
 -- Feitiços de coleta (todos os casts de coleta usam o nome do feitiço base).
-local GATHER_SPELLS = { herb = 2366, ore = 2575 }
+local GATHER_SPELLS = { herb = 2366, ore = 2575, skin = 8613 }
 
 local GetSpellName = (C_Spell and C_Spell.GetSpellName) or function(id)
     return (GetSpellInfo(id))
@@ -91,14 +91,24 @@ end
 ---------------------------------------------------------------------------
 -- Aprendizado: grava o nome de cada nó coletado
 ---------------------------------------------------------------------------
-local lastGather -- { name =, time = } da última coleta iniciada
+-- Última coleta iniciada: { kind = "herb"|"ore"|"skin", name =, time = }.
+-- Usada para saber de onde veio o saque (sessão e ícones aprendidos).
+FT.gatherContext = nil
+
+-- Tipo de coleta do saque aberto agora: "herb", "ore", "skin", "fish" ou nil.
+function FT:GetGatherKind()
+    if IsFishingLoot and IsFishingLoot() then return "fish" end
+    local ctx = self.gatherContext
+    if ctx and GetTime() - ctx.time < 10 then return ctx.kind, ctx.name end
+end
 
 FT:RegisterUnitEvent("UNIT_SPELLCAST_SENT", "player", function(self, unit, target, castGUID, spellID)
     local spellName = spellID and GetSpellName(spellID)
     local kind = spellName and spellNameToKind[spellName]
-    if not (kind and target and target ~= "") then return end
-    lastGather = { name = target, time = GetTime() }
-    if self.db.names[target] ~= kind then
+    if not kind then return end
+    self.gatherContext = { kind = kind, name = target, time = GetTime() }
+    -- Só ervas e minérios entram na lista de nomes de nós (skinning é em criaturas).
+    if kind ~= "skin" and target and target ~= "" and self.db.names[target] ~= kind then
         self.db.names[target] = kind
         self:RefreshHighlight()
     end
@@ -107,10 +117,8 @@ end)
 -- Ao abrir o saque de uma coleta, grava o ícone do primeiro item como ícone do
 -- nó. Assim ervas/minérios novos (do Forever ou em outro idioma) ganham ícone.
 FT:RegisterEvent("LOOT_OPENED", function(self)
-    if not lastGather or GetTime() - lastGather.time > 10 then return end
-    local name = lastGather.name
-    lastGather = nil
-    if self.db.nodeIcons[name] then return end
+    local kind, name = self:GetGatherKind()
+    if not (kind == "herb" or kind == "ore") or not name or self.db.nodeIcons[name] then return end
     local ok, icon = pcall(GetLootSlotInfo, 1)
     if ok and icon then self.db.nodeIcons[name] = icon end
 end)

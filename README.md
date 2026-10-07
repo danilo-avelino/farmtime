@@ -4,7 +4,8 @@ Add-on para **WoW Classic / WoW Forever** que deixa a erva ou o minério que
 está na sua frente mais fácil de notar. Quando o jogo escolhe uma erva ou um
 minério como alvo de interação, aparece em cima do nó uma placa no estilo
 nameplate (ícone do item + nome + tipo, borda verde para erva e laranja para
-minério), toca um som e a tecla F coleta. Não usa mapa nem minimapa.
+minério), toca um som e a tecla F coleta. Inclui fast loot e uma janela da
+sessão com o valor do que foi coletado (preços do Auctionator).
 
 ## Instalação (uso local)
 
@@ -21,14 +22,23 @@ minério), toca um som e a tecla F coleta. Não usa mapa nem minimapa.
 
 - **Botão do minimapa:** clique abre as configurações, clique direito liga/desliga,
   arrastar move o botão pela borda do minimapa.
-- **Painel:** liga/desliga o destaque, filtro só ervas/minérios, pulsar, som,
-  ícones de interação do jogo, debug, tamanho do ícone e alcance. Os botões
-  "Diagnóstico" (`/ft status`) e "Testar alerta" ficam no rodapé.
+- **Painel:** liga/desliga o destaque, filtro só ervas/minérios, som, tecla F,
+  fast loot, janela da sessão, ícones de interação do jogo, debug, tamanho do
+  ícone e alcance. Os botões "Diagnóstico" (`/ft status`), "Sessão" e "Testar
+  alerta" ficam no rodapé.
 - **Tecla F:** o addon liga o F ao comando "Interagir com o alvo"
   (`INTERACTTARGET`), então apertar F coleta a erva/minério destacado. O que o F
   fazia antes fica salvo; desmarcar a opção no painel (ou `/ft key`) devolve.
 - **Ícone:** mostra o ícone do item do recurso (ex.: Kingsblood). Para nós que
   não estão na tabela, o ícone é aprendido no primeiro saque.
+- **Fast loot:** pega todo o saque assim que a janela abre. Segurar Shift (a
+  tecla de "inverter auto loot") desativa naquele saque. Opção no painel ou `/ft loot`.
+- **Janela da sessão:** lista ervas, minérios, skinning e peixes coletados, com
+  quantidade e valor pelo **último preço visto no Auctionator** (sem Auctionator
+  aparece "—"). Mostra o total, um timer desde a primeira coleta da sessão e um
+  botão **Reset**. É móvel (arraste) e lembra a posição. A sessão fica só na
+  memória: ao relogar (ou `/reload`) ela zera e a janela some até a próxima
+  coleta, quando reaparece sozinha. `/ft session` mostra/esconde; `/ft reset` zera.
 - **Comandos:** `/ft` abre o painel; `/ft help` lista os demais.
 
 ## Estrutura
@@ -40,6 +50,8 @@ minério), toca um som e a tecla F coleta. Não usa mapa nem minimapa.
 | `Detection.lua` | Decide se o objeto é erva, minério ou outra coisa (listas do Classic + nomes aprendidos ao coletar) |
 | `Highlight.lua` | Liga as opções de alvo de interação do jogo e mostra o alerta |
 | `Keybind.lua` | Liga a tecla F ao "Interagir com o alvo" e guarda o atalho anterior |
+| `Loot.lua` | Fast loot e registro do que foi saqueado de coletas |
+| `Session.lua` | Janela da sessão: itens, valores do Auctionator, total, timer e reset |
 | `Config.lua` | Painel de configurações e botão do minimapa (sem bibliotecas externas) |
 
 ## Como funciona

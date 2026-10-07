@@ -10,7 +10,7 @@ local ICON = "Interface\\Icons\\INV_Misc_Flower_02"
 -- Painel
 ---------------------------------------------------------------------------
 local panel = CreateFrame("Frame", "FarmTimeConfig", UIParent, "BasicFrameTemplateWithInset")
-panel:SetSize(340, 490)
+panel:SetSize(340, 520)
 panel:SetPoint("CENTER")
 panel:SetFrameStrata("DIALOG")
 panel:SetMovable(true)
@@ -87,11 +87,12 @@ end
 
 AddCheckbox("enabled",       "Ativar destaque")
 AddCheckbox("onlyGathering", "Só ervas e minérios")
-AddCheckbox("pulse",         "Animação de pulsar")
 AddCheckbox("anchorToNode",  "Ícone em cima do nó (senão, no centro da tela)")
 AddCheckbox("hideGameName",  "Esconder o nome do jogo sobre o nó")
 AddCheckbox("sound",         "Som ao encontrar um nó")
 AddCheckbox("bindInteractKey", "Tecla F coleta a erva/minério")
+AddCheckbox("fastLoot",      "Fast loot (Shift segurado desativa)")
+AddCheckbox("sessionWindow", "Janela da sessão abre ao coletar")
 AddCheckbox("manageCVars",   "Ligar ícones de interação do jogo")
 AddCheckbox("debug",         "Debug no chat")
 y = y - 6
@@ -110,16 +111,22 @@ minimapCB.Refresh = function(self) self:SetChecked(not FT.db.minimap.hide) end
 table.insert(controls, minimapCB)
 
 local statusBtn = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-statusBtn:SetSize(130, 22)
+statusBtn:SetSize(96, 22)
 statusBtn:SetPoint("BOTTOMLEFT", 16, 14)
 statusBtn:SetText("Diagnóstico")
 statusBtn:SetScript("OnClick", function() SlashCmdList.FARMTIME("status") end)
 
 local testBtn = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-testBtn:SetSize(130, 22)
+testBtn:SetSize(96, 22)
 testBtn:SetPoint("BOTTOMRIGHT", -16, 14)
 testBtn:SetText("Testar alerta")
 testBtn:SetScript("OnClick", function() FT:ShowTestAlert() end)
+
+local sessionBtn = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+sessionBtn:SetSize(96, 22)
+sessionBtn:SetPoint("BOTTOM", 0, 14)
+sessionBtn:SetText("Sessão")
+sessionBtn:SetScript("OnClick", function() FT:ToggleSessionWindow() end)
 
 function FT:RefreshConfig()
     if not panel:IsShown() then return end
