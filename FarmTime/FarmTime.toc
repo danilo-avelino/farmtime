@@ -1,0 +1,11 @@
+## Interface: 120001
+## Title: Farm Time
+## Notes: HUD de coleta: mostra ervas e minérios conhecidos sobre o campo de visão.
+## Author: Danilo Avelino
+## Version: 0.1.0
+## SavedVariables: FarmTimeDB
+## IconTexture: Interface\Icons\Trade_Herbalism
+
+Core.lua
+Detection.lua
+Overlay.lua
