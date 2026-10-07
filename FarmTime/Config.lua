@@ -94,7 +94,7 @@ AddCheckbox("bindInteractKey", "Tecla F coleta a erva/minério")
 AddCheckbox("manageCVars",   "Ligar ícones de interação do jogo")
 AddCheckbox("debug",         "Debug no chat")
 y = y - 6
-AddSlider("iconSize",      "Tamanho do ícone", 16, 160, 4)
+AddSlider("iconSize",      "Tamanho do ícone", 16, 96, 2)
 AddSlider("interactRange", "Alcance (jardas)", 5, 60, 1)
 
 local minimapCB = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")

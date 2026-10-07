@@ -64,22 +64,62 @@ local COLORS = {
     other = { 0.6, 0.8, 1.0 },
 }
 
+local LABELS = { herb = "Erva", ore = "Minério", other = "Objeto" }
+
+-- Moldura feita de 4 texturas finas (funciona igual em todos os clientes,
+-- sem depender de BackdropTemplate).
+local function CreateBorder(parent, layer, thickness, inset)
+    local edges = {}
+    for i = 1, 4 do edges[i] = parent:CreateTexture(nil, layer) end
+    local t, o = thickness, inset or 0
+    edges[1]:SetPoint("TOPLEFT", -o, o);         edges[1]:SetPoint("TOPRIGHT", o, o);        edges[1]:SetHeight(t)
+    edges[2]:SetPoint("BOTTOMLEFT", -o, -o);     edges[2]:SetPoint("BOTTOMRIGHT", o, -o);    edges[2]:SetHeight(t)
+    edges[3]:SetPoint("TOPLEFT", -o, o);         edges[3]:SetPoint("BOTTOMLEFT", -o, -o);    edges[3]:SetWidth(t)
+    edges[4]:SetPoint("TOPRIGHT", o, o);         edges[4]:SetPoint("BOTTOMRIGHT", o, -o);    edges[4]:SetWidth(t)
+    return {
+        SetColor = function(_, r, g, b, a)
+            for _, e in ipairs(edges) do e:SetColorTexture(r, g, b, a or 1) end
+        end,
+    }
+end
+
+-- Placa no estilo nameplate: [ícone] Nome / Tipo
 local alert = CreateFrame("Frame", "FarmTimeAlert", UIParent)
 alert:SetPoint("CENTER", UIParent, "CENTER", 0, 140)
 alert:SetFrameStrata("HIGH")
 alert:EnableMouse(false)
 alert:Hide()
 
-alert.glow = alert:CreateTexture(nil, "BACKGROUND")
-alert.glow:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
-alert.glow:SetBlendMode("ADD")
-alert.glow:SetPoint("CENTER")
+alert.bg = alert:CreateTexture(nil, "BACKGROUND")
+alert.bg:SetAllPoints()
+alert.bg:SetColorTexture(0.05, 0.05, 0.05, 0.85)
 
-alert.icon = alert:CreateTexture(nil, "ARTWORK")
+-- Faixa colorida na base, como a barra de vida de uma nameplate.
+alert.bar = alert:CreateTexture(nil, "BORDER")
+alert.bar:SetPoint("BOTTOMLEFT", 2, 2)
+alert.bar:SetPoint("BOTTOMRIGHT", -2, 2)
+alert.bar:SetHeight(3)
+
+alert.outer = CreateBorder(alert, "OVERLAY", 1, 1)  -- contorno preto
+alert.outer:SetColor(0, 0, 0, 1)
+alert.border = CreateBorder(alert, "BORDER", 2, 0)  -- borda colorida
+
+alert.iconFrame = CreateFrame("Frame", nil, alert)
+alert.iconFrame:SetPoint("LEFT", alert, "LEFT", 4, 1)
+alert.icon = alert.iconFrame:CreateTexture(nil, "ARTWORK")
 alert.icon:SetAllPoints()
+alert.iconBorder = CreateBorder(alert.iconFrame, "OVERLAY", 1, 1)
+alert.iconBorder:SetColor(0, 0, 0, 1)
 
-alert.text = alert:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
-alert.text:SetPoint("TOP", alert, "BOTTOM", 0, -6)
+alert.text = alert:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+alert.text:SetPoint("TOPLEFT", alert.iconFrame, "TOPRIGHT", 8, -2)
+alert.text:SetJustifyH("LEFT")
+alert.text:SetShadowOffset(1, -1)
+
+alert.sub = alert:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+alert.sub:SetPoint("BOTTOMLEFT", alert.iconFrame, "BOTTOMRIGHT", 8, 2)
+alert.sub:SetJustifyH("LEFT")
+alert.sub:SetTextColor(0.75, 0.75, 0.75)
 
 local pulse = alert:CreateAnimationGroup()
 pulse:SetLooping("BOUNCE")
@@ -125,21 +165,28 @@ local function ShowAlert(kind, name, unit)
     local c = COLORS[kind]
     local size = db.iconSize
 
-    alert:SetSize(size, size)
     -- Ícone do próprio recurso (ex.: Kingsblood); se não souber, o ícone que o
     -- jogo usaria no cursor (luva de coleta, picareta...); por último, um genérico.
     local itemIcon = FT:GetNodeIcon(name)
     alert.icon:SetTexCoord(0, 1, 0, 1)
     if itemIcon then
         alert.icon:SetTexture(itemIcon)
-        alert.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+        alert.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
     elseif not (unit and SetUnitCursorTexture and SetUnitCursorTexture(alert.icon, unit)) then
         alert.icon:SetTexture(FALLBACK_ICONS[kind])
     end
-    alert.glow:SetSize(size * 1.9, size * 1.9)
-    alert.glow:SetVertexColor(c[1], c[2], c[3])
-    alert.text:SetText(name or "")
+
+    alert.text:SetText(name or LABELS[kind])
     alert.text:SetTextColor(c[1], c[2], c[3])
+    alert.sub:SetText(LABELS[kind])
+    alert.border:SetColor(c[1] * 0.8, c[2] * 0.8, c[3] * 0.8, 1)
+    alert.bar:SetColorTexture(c[1], c[2], c[3], 0.9)
+
+    -- Tamanho: o ícone define a altura da placa; a largura acompanha o nome.
+    local textWidth = math.max(alert.text:GetStringWidth(), alert.sub:GetStringWidth())
+    alert.iconFrame:SetSize(size, size)
+    alert:SetSize(size + 8 + 8 + textWidth + 12, size + 10)
+
     -- Prende o ícone em cima do próprio nó quando o jogo desenha uma placa nele;
     -- senão, fica fixo acima do centro da tela.
     local plate = db.anchorToNode and unit and GetInteractPlate()

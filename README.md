@@ -2,9 +2,9 @@
 
 Add-on para **WoW Classic / WoW Forever** que deixa a erva ou o minério que
 está na sua frente mais fácil de notar. Quando o jogo escolhe uma erva ou um
-minério como alvo de interação, aparece um alerta grande perto do centro da
-tela (ícone pulsando + nome + som), e o próprio jogo passa a desenhar um ícone
-em cima do nó. Não usa mapa nem minimapa.
+minério como alvo de interação, aparece em cima do nó uma placa no estilo
+nameplate (ícone do item + nome + tipo, borda verde para erva e laranja para
+minério), toca um som e a tecla F coleta. Não usa mapa nem minimapa.
 
 ## Instalação (uso local)
 
@@ -56,8 +56,8 @@ token de unidade `softinteract`. O Farm Time:
    salvos e `/ft restore` os devolve.
 2. Quando o alvo de interação muda (`PLAYER_SOFT_INTERACT_CHANGED`), lê o nome
    do objeto e classifica como erva, minério ou outro.
-3. Se for erva/minério, mostra o alerta com o ícone que o jogo usaria no cursor
-   (`SetUnitCursorTexture`) e toca um som.
+3. Se for erva/minério, mostra a placa com o ícone do item (ou, se não souber,
+   o ícone que o jogo usaria no cursor, via `SetUnitCursorTexture`) e toca um som.
 
 **Diagnóstico:** `/ft status` mostra a versão do cliente, as opções do jogo e o
 alvo de interação atual; `/ft debug` imprime cada mudança de alvo no chat.

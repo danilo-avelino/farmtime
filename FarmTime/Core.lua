@@ -7,7 +7,7 @@ _G.FarmTime = FT
 FT.defaults = {
     enabled       = true,
     onlyGathering = true,  -- destacar só ervas/minérios (false = qualquer objeto interagível)
-    iconSize      = 64,    -- tamanho do ícone do alerta
+    iconSize      = 36,    -- tamanho do ícone na placa (a placa acompanha)
     pulse         = false, -- animação de pulsar
     anchorToNode  = true,  -- prender o ícone em cima do nó (placa do jogo), se existir
     nodeOffset    = 10,    -- distância (px) entre a placa do jogo e o ícone
@@ -86,7 +86,9 @@ FT:RegisterEvent("ADDON_LOADED", function(self, name)
     FarmTimeDB.showBanner = nil
     -- 0.6: o pulsar passou a vir desligado.
     if (FarmTimeDB.schema or 0) < 6 then FarmTimeDB.pulse = false end
-    FarmTimeDB.schema = 6
+    -- 0.7: visual de placa; o ícone ficou menor por padrão.
+    if (FarmTimeDB.schema or 0) < 7 then FarmTimeDB.iconSize = nil end
+    FarmTimeDB.schema = 7
     CopyDefaults(self.defaults, FarmTimeDB)
     self.db = FarmTimeDB
 end)
@@ -140,7 +142,7 @@ end
 commands[""]    = function() FT:ToggleConfig() end
 commands.config = commands[""]
 commands.toggle = Toggle("enabled", "destaque")
-commands.size   = Number("iconSize", "tamanho do ícone", 16, 160)
+commands.size   = Number("iconSize", "tamanho do ícone", 16, 96)
 commands.range  = Number("interactRange", "alcance (o jogo pode limitar)", 5, 60)
 commands.all    = function()
     FT:SetOption("onlyGathering", not FT.db.onlyGathering)
@@ -199,7 +201,7 @@ commands.help = function()
     print("  /ft               - abre/fecha o painel de configurações")
     print("  /ft toggle        - liga/desliga o destaque")
     print("  /ft minimap       - mostra/esconde o botão do minimapa")
-    print("  /ft size <px>     - tamanho do ícone do alerta")
+    print("  /ft size <px>     - tamanho do ícone na placa")
     print("  /ft range <jd>    - alcance do soft target de interação")
     print("  /ft all           - alterna: só ervas/minérios ou qualquer objeto")
     print("  /ft pulse         - liga/desliga a animação")
