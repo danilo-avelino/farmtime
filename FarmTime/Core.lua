@@ -5,15 +5,15 @@ local ADDON_NAME, FT = ...
 _G.FarmTime = FT
 
 FT.defaults = {
-    enabled     = true,
-    maxRange    = 120,   -- jardas: nós além disso não são desenhados
-    fov         = 90,    -- campo de visão horizontal assumido (graus)
-    cameraHeight = 6,    -- altura aproximada da câmera (jardas) usada na projeção
-    iconSize    = 48,    -- tamanho do ícone a ~20 jardas
-    updateRate  = 0.05,  -- segundos entre atualizações do overlay
-    showEdgeArrows = true, -- mostra nós fora do campo de visão na borda da tela
-    hideInCombat = true,
-    nodes = {},          -- [instanceID] = { {x=, y=, z=, kind=, name=, t=}, ... }
+    enabled       = true,
+    onlyGathering = true,  -- destacar só ervas/minérios (false = qualquer objeto interagível)
+    iconSize      = 64,    -- tamanho do ícone sobre o nó
+    pulse         = true,  -- animação de pulsar
+    showBanner    = true,  -- nome do nó abaixo do centro da tela
+    interactRange = 30,    -- alcance (jardas) do soft target de interação
+    manageCVars   = true,  -- o addon liga as opções de soft target do jogo
+    savedCVars    = {},    -- valores originais, para /ft restore
+    names         = {},    -- [nome do nó] = "herb" | "ore" (aprendido ao coletar)
 }
 
 local function CopyDefaults(src, dst)
@@ -31,20 +31,10 @@ function FT:Print(...)
     print("|cff33ff99Farm Time|r:", ...)
 end
 
--- Posição do jogador em coordenadas de mundo (jardas).
--- UnitPosition retorna (posY, posX, posZ, instanceID); X aponta para o norte,
--- Y aponta para o oeste. Retorna nil dentro de instâncias (restrição da API).
-function FT:GetPlayerWorldPosition()
-    local y, x, z, instanceID = UnitPosition("player")
-    if not x then return nil end
-    return x, y, z or 0, instanceID
-end
-
 ---------------------------------------------------------------------------
 -- Eventos
 ---------------------------------------------------------------------------
 local frame = CreateFrame("Frame")
-FT.eventFrame = frame
 FT.handlers = {}
 
 function FT:RegisterEvent(event, fn)
@@ -68,115 +58,92 @@ end)
 FT:RegisterEvent("ADDON_LOADED", function(self, name)
     if name ~= ADDON_NAME then return end
     FarmTimeDB = FarmTimeDB or {}
+    -- Remove dados da versão 0.1 (HUD por posição), que não são mais usados.
+    FarmTimeDB.nodes, FarmTimeDB.fov, FarmTimeDB.cameraHeight = nil, nil, nil
+    FarmTimeDB.maxRange, FarmTimeDB.updateRate, FarmTimeDB.showEdgeArrows = nil, nil, nil
     CopyDefaults(self.defaults, FarmTimeDB)
     self.db = FarmTimeDB
-    if self.OnInitialize then self:OnInitialize() end
+end)
+
+FT:RegisterEvent("PLAYER_LOGIN", function(self)
+    if self.db.manageCVars then self:ApplyCVars() end
+    self:Print("carregado. Digite /ft help para os comandos.")
 end)
 
 ---------------------------------------------------------------------------
 -- Comandos: /farmtime ou /ft
 ---------------------------------------------------------------------------
-local function CountNodes()
-    local total = 0
-    for _, list in pairs(FT.db.nodes) do total = total + #list end
-    return total
-end
-
 local commands = {}
 
 commands[""] = function()
     FT.db.enabled = not FT.db.enabled
     FT:Print(FT.db.enabled and "ativado" or "desativado")
-    FT:RefreshOverlayState()
+    FT:RefreshHighlight()
 end
 
-commands.fov = function(arg)
+commands.size = function(arg)
     local v = tonumber(arg)
-    if v and v >= 30 and v <= 150 then
-        FT.db.fov = v
-        FT:Print("FOV =", v)
+    if v and v >= 16 and v <= 160 then
+        FT.db.iconSize = v
+        FT:Print("tamanho do ícone =", v)
+        FT:RefreshHighlight()
     else
-        FT:Print("uso: /ft fov <30-150>  (atual:", FT.db.fov .. ")")
+        FT:Print("uso: /ft size <16-160>  (atual:", FT.db.iconSize .. ")")
     end
 end
 
 commands.range = function(arg)
     local v = tonumber(arg)
-    if v and v >= 10 and v <= 500 then
-        FT.db.maxRange = v
-        FT:Print("alcance =", v, "jardas")
+    if v and v >= 5 and v <= 60 then
+        FT.db.interactRange = v
+        FT:ApplyCVars()
+        FT:Print("alcance =", v, "jardas (o jogo pode limitar a um valor menor)")
     else
-        FT:Print("uso: /ft range <10-500>  (atual:", FT.db.maxRange .. ")")
+        FT:Print("uso: /ft range <5-60>  (atual:", FT.db.interactRange .. ")")
     end
 end
 
-commands.height = function(arg)
-    local v = tonumber(arg)
-    if v and v > 0 and v <= 50 then
-        FT.db.cameraHeight = v
-        FT:Print("altura da câmera =", v)
-    else
-        FT:Print("uso: /ft height <1-50>  (atual:", FT.db.cameraHeight .. ")")
-    end
+commands.all = function()
+    FT.db.onlyGathering = not FT.db.onlyGathering
+    FT:Print(FT.db.onlyGathering and "destacando só ervas e minérios"
+        or "destacando qualquer objeto interagível")
+    FT:RefreshHighlight()
 end
 
-commands.size = function(arg)
-    local v = tonumber(arg)
-    if v and v >= 16 and v <= 128 then
-        FT.db.iconSize = v
-        FT:Print("tamanho do ícone =", v)
-    else
-        FT:Print("uso: /ft size <16-128>  (atual:", FT.db.iconSize .. ")")
-    end
+commands.pulse = function()
+    FT.db.pulse = not FT.db.pulse
+    FT:Print("pulsar", FT.db.pulse and "ligado" or "desligado")
+    FT:RefreshHighlight()
 end
 
-commands.list = function()
-    FT:Print(CountNodes(), "nós salvos no total")
-    local px, py, _, inst = FT:GetPlayerWorldPosition()
-    if not px then return end
-    for _, n in ipairs(FT.db.nodes[inst] or {}) do
-        local d = math.sqrt((n.x - px) ^ 2 + (n.y - py) ^ 2)
-        if d <= FT.db.maxRange then
-            FT:Print(string.format("  %s (%s) - %.0f jd", n.name or "?", n.kind, d))
-        end
-    end
+commands.banner = function()
+    FT.db.showBanner = not FT.db.showBanner
+    FT:Print("nome no centro da tela", FT.db.showBanner and "ligado" or "desligado")
+    FT:RefreshHighlight()
 end
 
-commands.clear = function(arg)
-    if arg == "all" then
-        wipe(FT.db.nodes)
-        FT:Print("todos os nós apagados")
-    else
-        local _, _, _, inst = FT:GetPlayerWorldPosition()
-        if inst then FT.db.nodes[inst] = nil end
-        FT:Print("nós deste continente apagados (use '/ft clear all' para tudo)")
-    end
+commands.restore = function()
+    FT:RestoreCVars()
+    FT.db.manageCVars = false
+    FT:Print("opções de soft target restauradas. Use /ft apply para religar.")
 end
 
--- Cria um nó falso 30 jardas à frente do personagem para calibrar FOV/altura.
-commands.test = function()
-    local px, py, pz, inst = FT:GetPlayerWorldPosition()
-    local facing = GetPlayerFacing()
-    if not px or not facing then
-        FT:Print("posição indisponível aqui (instância?)")
-        return
-    end
-    local x = px + math.cos(facing) * 30
-    local y = py + math.sin(facing) * 30
-    FT:AddNode(inst, x, y, pz, "herb", "Nó de teste")
-    FT:Print("nó de teste criado 30 jardas à frente")
+commands.apply = function()
+    FT.db.manageCVars = true
+    FT:ApplyCVars()
+    FT:Print("opções de soft target aplicadas.")
 end
 
 commands.help = function()
     FT:Print("comandos:")
-    print("  /ft                 - liga/desliga o overlay")
-    print("  /ft fov <graus>     - campo de visão usado na projeção")
-    print("  /ft range <jardas>  - alcance máximo de exibição")
-    print("  /ft height <jardas> - altura da câmera (ajusta a posição vertical)")
-    print("  /ft size <px>       - tamanho base dos ícones")
-    print("  /ft list            - lista nós próximos")
-    print("  /ft test            - cria um nó de teste à frente")
-    print("  /ft clear [all]     - apaga nós do continente atual (ou todos)")
+    print("  /ft               - liga/desliga o destaque")
+    print("  /ft size <px>     - tamanho do ícone sobre o nó")
+    print("  /ft range <jd>    - alcance do soft target de interação")
+    print("  /ft all           - alterna: só ervas/minérios ou qualquer objeto")
+    print("  /ft pulse         - liga/desliga a animação")
+    print("  /ft banner        - liga/desliga o nome no centro da tela")
+    print("  /ft restore       - devolve as opções de soft target originais")
+    print("  /ft apply         - reaplica as opções de soft target do Farm Time")
 end
 
 SLASH_FARMTIME1 = "/farmtime"

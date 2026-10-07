@@ -1,96 +1,71 @@
--- Farm Time - Detecção de nós
+-- Farm Time - Classificação de nós
 --
--- A API de addons NÃO permite listar objetos do mundo (ervas, minérios etc.)
--- nem ler os pontos do minimapa. Por isso a detecção aqui é por aprendizado:
--- toda vez que você coleta um nó, o addon grava a posição do personagem
--- naquele momento. Nas próximas passagens pela área o nó aparece no overlay.
+-- O objeto que o jogo escolhe como "soft target" de interação chega como o
+-- token de unidade "softinteract". Aqui decidimos se ele é erva, minério ou
+-- outra coisa (baú, caixa de missão etc.), usando duas fontes:
+--   1. o tooltip do objeto (linha "Herborismo"/"Mineração" que o jogo mostra)
+--   2. nomes aprendidos: todo nó que você coleta fica gravado por nome
 
 local _, FT = ...
 
-local MERGE_DISTANCE = 10 -- jardas: nós mais próximos que isso são o mesmo nó
-
--- Nomes localizados dos feitiços de coleta. Em todas as expansões os casts
--- de coleta usam o mesmo nome dos feitiços base (vários IDs, mesmo nome).
 local GetSpellName = (C_Spell and C_Spell.GetSpellName) or function(id)
     return (GetSpellInfo(id))
 end
 
-local BASE_SPELLS = {
-    herb = 2366, -- Herb Gathering / Herborismo
-    ore  = 2575, -- Mining / Mineração
-}
+-- Feitiços de coleta (todos os casts de coleta usam o nome do feitiço base).
+local GATHER_SPELLS = { herb = 2366, ore = 2575 }
+-- Linhas de profissão (texto que aparece no tooltip do nó).
+local SKILL_LINES   = { herb = 182,  ore = 186 }
 
 local spellNameToKind = {}
+local skillNameToKind = {}
 
-local function BuildSpellNames()
-    for kind, id in pairs(BASE_SPELLS) do
+local function BuildLookups()
+    for kind, id in pairs(GATHER_SPELLS) do
         local name = GetSpellName(id)
         if name then spellNameToKind[name] = kind end
     end
-end
-
-local function KindForSpell(spellID)
-    local name = spellID and GetSpellName(spellID)
-    return name and spellNameToKind[name]
-end
-
-function FT:AddNode(instanceID, x, y, z, kind, name)
-    local list = self.db.nodes[instanceID]
-    if not list then
-        list = {}
-        self.db.nodes[instanceID] = list
-    end
-    for _, n in ipairs(list) do
-        if n.kind == kind and (n.x - x) ^ 2 + (n.y - y) ^ 2 < MERGE_DISTANCE ^ 2 then
-            n.t = time()
-            n.count = (n.count or 1) + 1
-            if name then n.name = name end
-            return n, false
+    if C_TradeSkillUI and C_TradeSkillUI.GetTradeSkillDisplayName then
+        for kind, id in pairs(SKILL_LINES) do
+            local ok, name = pcall(C_TradeSkillUI.GetTradeSkillDisplayName, id)
+            if ok and name and name ~= "" then skillNameToKind[name] = kind end
         end
     end
-    local node = { x = x, y = y, z = z, kind = kind, name = name, t = time(), count = 1 }
-    table.insert(list, node)
-    return node, true
 end
 
--- Nós do continente/instância atual (usado pelo overlay).
-function FT:GetNodes(instanceID)
-    return self.db.nodes[instanceID]
+FT:RegisterEvent("PLAYER_LOGIN", BuildLookups)
+
+local function KindFromTooltip(unit)
+    if not (C_TooltipInfo and C_TooltipInfo.GetUnit) then return nil end
+    local ok, data = pcall(C_TooltipInfo.GetUnit, unit)
+    if not ok or not data or not data.lines then return nil end
+    for i = 2, #data.lines do
+        local text = data.lines[i].leftText
+        if text then
+            for skill, kind in pairs(skillNameToKind) do
+                if text:find(skill, 1, true) then return kind end
+            end
+        end
+    end
+end
+
+-- Retorna "herb", "ore" ou "other" para um token de unidade de objeto.
+function FT:Classify(unit, name)
+    if name and self.db.names[name] then
+        return self.db.names[name]
+    end
+    local kind = KindFromTooltip(unit)
+    if kind and name then self.db.names[name] = kind end
+    return kind or "other"
 end
 
 ---------------------------------------------------------------------------
--- Eventos de cast
+-- Aprendizado: grava o nome de cada nó coletado
 ---------------------------------------------------------------------------
-local pending = {} -- [castGUID] = { kind, target }
-
-FT:RegisterEvent("PLAYER_LOGIN", function()
-    BuildSpellNames()
-end)
-
 FT:RegisterUnitEvent("UNIT_SPELLCAST_SENT", "player", function(self, unit, target, castGUID, spellID)
-    local kind = KindForSpell(spellID)
-    if kind then
-        pending[castGUID] = { kind = kind, target = target }
+    local spellName = spellID and GetSpellName(spellID)
+    local kind = spellName and spellNameToKind[spellName]
+    if kind and target and target ~= "" and not self.db.names[target] then
+        self.db.names[target] = kind
     end
 end)
-
-FT:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player", function(self, unit, castGUID, spellID)
-    local info = pending[castGUID]
-    if not info then return end
-    pending[castGUID] = nil
-
-    local x, y, z, inst = self:GetPlayerWorldPosition()
-    if not x then return end
-
-    local name = info.target ~= "" and info.target or nil
-    local _, isNew = self:AddNode(inst, x, y, z, info.kind, name)
-    if isNew then
-        self:Print("novo nó registrado:", name or info.kind)
-    end
-end)
-
-local function Forget(self, unit, castGUID)
-    if castGUID then pending[castGUID] = nil end
-end
-FT:RegisterUnitEvent("UNIT_SPELLCAST_FAILED", "player", Forget)
-FT:RegisterUnitEvent("UNIT_SPELLCAST_INTERRUPTED", "player", Forget)

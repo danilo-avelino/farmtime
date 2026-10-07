@@ -1,7 +1,8 @@
 # Farm Time
 
-Add-on de World of Warcraft que destaca ervas e minérios **no campo de visão 3D**
-(um HUD sobre a tela), em vez de no minimapa.
+Add-on de World of Warcraft que deixa **a erva ou o minério que já está na sua
+frente** mais fácil de ver: um ícone grande, com brilho pulsando e o nome do nó,
+desenhado sobre o próprio objeto no mundo 3D. Não usa mapa nem minimapa.
 
 ## Instalação (uso local)
 
@@ -16,38 +17,39 @@ Add-on de World of Warcraft que destaca ervas e minérios **no campo de visão 3
 | Arquivo | Função |
 |---|---|
 | `FarmTime.toc` | Metadados, SavedVariables (`FarmTimeDB`) e ordem de carregamento |
-| `Core.lua` | Namespace, configurações padrão, despacho de eventos, comandos `/ft` |
-| `Detection.lua` | Registra a posição de cada erva/minério que você coleta |
-| `Overlay.lua` | Projeta os nós conhecidos na tela (sobre o `WorldFrame`) com `C_Timer.NewTicker` |
+| `Core.lua` | Configurações padrão, despacho de eventos, comandos `/ft` |
+| `Detection.lua` | Decide se o objeto é erva, minério ou outra coisa (tooltip + nomes aprendidos ao coletar) |
+| `Highlight.lua` | Liga o soft target de interação do jogo e ancora o destaque na placa de nome do objeto |
 
-## Como funciona — e por que não é um "ESP" de verdade
+## Como funciona
 
-O que o prompt original imaginava (ler os nós próximos e converter a posição 3D
-para a tela) **não é possível pela API oficial de add-ons**:
+A API de add-ons **não deixa** um add-on listar objetos do mundo (ervas,
+minérios) nem converter uma posição 3D em posição na tela. O que dá para usar é
+um recurso do próprio jogo: o **soft target de interação** (Opções → Controles →
+"Interagir com alvo"). Com ele, o cliente escolhe o objeto interagível à sua
+frente e pode desenhar uma placa de nome sobre ele. O Farm Time:
 
-- **Não existe API para listar objetos do mundo.** Ervas e minérios são
-  *GameObjects*; o add-on não consegue enumerá-los. Os pontinhos do minimapa
-  (Rastrear Ervas/Minérios) são desenhados pelo cliente e não são legíveis por Lua.
-- **Não existe `WorldToScreen` nem acesso à câmera** (posição, pitch, yaw, zoom).
-  Placas de nome (nameplates) só existem para unidades (NPCs/jogadores), não para nós.
+1. Liga as opções do jogo necessárias (`SoftTargetInteract`,
+   `SoftTargetNameplateInteract`, `SoftTargetIconGameObject`,
+   `SoftTargetInteractRange` etc.). Os valores originais ficam salvos e
+   `/ft restore` os devolve.
+2. Quando o alvo de interação muda (`PLAYER_SOFT_INTERACT_CHANGED`), lê o objeto
+   pelo token de unidade `softinteract` e classifica: erva, minério ou outro.
+3. Ancora um ícone grande e pulsante na placa de nome do objeto. Como a placa é
+   posicionada pelo próprio cliente, o ícone fica exatamente sobre o nó e
+   acompanha a câmera. Também mostra o nome do nó abaixo do centro da tela.
 
-Por isso o Farm Time usa uma abordagem dentro das regras:
+**Limitações**
 
-1. **Detecção por aprendizado** — quando você coleta (feitiços "Herborismo" /
-   "Mineração"), o addon grava sua posição (`UnitPosition`) e o nome do nó
-   (`UNIT_SPELLCAST_SENT`). É a mesma ideia do GatherMate2. Nós a menos de 10
-   jardas um do outro são mesclados.
-2. **Projeção aproximada** — com sua posição e direção (`GetPlayerFacing`), o
-   addon faz uma projeção em perspectiva assumindo a câmera atrás do personagem.
-   Funciona bem andando/girando com o botão direito; se girar a câmera com o
-   botão esquerdo, os ícones não acompanham. Calibre com `/ft test`, `/ft fov`
-   e `/ft height`.
-3. Nós fora do campo de visão aparecem esmaecidos na borda esquerda/direita.
-
-Limitações: `UnitPosition` e `GetPlayerFacing` retornam `nil` dentro de
-instâncias, então o HUD só funciona no mundo aberto. A API muda entre patches
-(especialmente com as restrições introduzidas em Midnight/12.x) — se algo parar
-de funcionar, verifique primeiro essas duas funções.
+- O jogo escolhe **um objeto por vez** (o mais à frente/central). Não dá para
+  destacar todas as ervas visíveis ao mesmo tempo.
+- O alcance do soft target é limitado pelo cliente; `/ft range` pede mais, mas
+  o jogo pode reduzir.
+- A primeira vez que você vê um tipo de nó, a classificação depende do tooltip.
+  Se não funcionar, use `/ft all` para destacar qualquer objeto; depois de
+  coletar um nó, o nome dele fica gravado como erva/minério.
+- Em Midnight (12.x) algumas informações de unidades viram "secret values" em
+  combate; nesse caso o destaque simplesmente não aparece.
 
 ## Regras da Blizzard (ESP de recursos)
 
@@ -60,13 +62,12 @@ de funcionar, verifique primeiro essas duas funções.
 - **Distribuição pública** (CurseForge, Wago etc.) segue a *UI Add-On Development
   Policy*: o add-on deve ser gratuito, com código não ofuscado, sem cobrar por
   recursos, sem pedir doação dentro do jogo de forma intrusiva, e sem afetar
-  negativamente servidores ou outros jogadores. Um HUD baseado em nós que você
-  mesmo coletou é equivalente ao que GatherMate2/HandyNotes já fazem.
+  negativamente servidores ou outros jogadores. Destacar o alvo de interação que o
+  próprio jogo já escolheu é o mesmo tipo de coisa que addons de nameplate
+  (Plater etc.) já fazem.
 
 ## Próximos passos sugeridos
 
-- Importar nós do banco de dados do GatherMate2 (se instalado) convertendo
-  coordenadas de mapa com `C_Map.GetWorldPosFromMapPos`.
 - Ícone específico por recurso (mapear nome do nó → item e usar `C_Item.GetItemIconByID`).
 - Painel de configurações (`Settings.RegisterCanvasLayoutCategory`).
-- Esconder/marcar como "coletado recentemente" nós que você acabou de coletar.
+- Som curto quando um nó novo entra como alvo de interação.
