@@ -28,6 +28,7 @@ FT.defaults = {
     language      = "enUS", -- "enUS" ou "ptBR"
     nodes         = {},    -- [instanceID] = { {x=, y=, z=, name=, kind=, gatheredAt=, confirmedAt=}, ... }
     hudEnabled    = true,  -- marcadores 3D dos nós salvos
+    showPrompt    = true,  -- aviso "aperte F" perto de erva/minério/corpo esfolável
     hudRange      = 150,   -- jardas: nós mais longe que isso não aparecem
     hudFov        = 90,    -- campo de visão (graus) usado na projeção
 }
@@ -125,6 +126,7 @@ function FT:SetOption(key, value)
     elseif key == "language" then
         self:ApplyLanguage()
     end
+    if self.UpdatePrompt then self:UpdatePrompt() end
     self:RefreshHighlight()
     if self.RefreshConfig then self:RefreshConfig() end
 end
@@ -165,6 +167,7 @@ commands.loot   = Toggle("fastLoot", "OPT_FASTLOOT")
 commands.mats   = Toggle("trackTradeGoods", "OPT_MATS")
 commands.session = function() FT:ToggleSessionWindow() end
 commands.hud    = Toggle("hudEnabled", "OPT_HUD")
+commands.prompt = Toggle("showPrompt", "OPT_PROMPT")
 commands.fov    = Number("hudFov", "OPT_FOV", 40, 150)
 commands.nodes  = function()
     local total, here = FT:CountNodes()

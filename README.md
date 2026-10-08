@@ -29,6 +29,11 @@ sessão com o valor do que foi coletado (preços do Auctionator).
 - **Tecla F:** o addon liga o F ao comando "Interagir com o alvo"
   (`INTERACTTARGET`), então apertar F coleta a erva/minério destacado. O que o F
   fazia antes fica salvo; desmarcar a opção no painel (ou `/ft key`) devolve.
+- **Aviso "aperte F":** perto de uma erva, minério ou corpo que pode ser
+  esfolado, aparece abaixo do centro da tela `[F] Gather Kingsblood` /
+  `[F] Mine Copper Vein` / `[F] Skin Plainstrider`. A tecla mostrada é a que
+  está ligada a "Interagir com o alvo". O corpo esfolável é reconhecido pelo
+  texto "Skinnable" do tooltip. Opção no painel ou `/ft prompt`.
 - **Ícone:** mostra o ícone do item do recurso (ex.: Kingsblood). Para nós que
   não estão na tabela, o ícone é aprendido no primeiro saque.
 - **Fast loot:** pega todo o saque assim que a janela abre. Segurar Shift (a
@@ -68,6 +73,7 @@ sessão com o valor do que foi coletado (preços do Auctionator).
 | `Locale.lua` | Textos em inglês (padrão) e português (BR) e troca de idioma |
 | `Detection.lua` | Decide se o objeto é erva, minério ou outra coisa (listas do Classic + nomes aprendidos ao coletar) |
 | `Highlight.lua` | Liga as opções de alvo de interação do jogo e mostra o alerta |
+| `Prompt.lua` | Aviso "aperte F para coletar/minerar/esfolar" |
 | `Nodes.lua` | Guarda a posição dos nós coletados, confirma pelo minimapa e desenha os marcadores 3D |
 | `Keybind.lua` | Liga a tecla F ao "Interagir com o alvo" e guarda o atalho anterior |
 | `Loot.lua` | Fast loot e registro do que foi saqueado de coletas e dos materiais de profissão |
