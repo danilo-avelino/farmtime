@@ -10,7 +10,7 @@ local ICON = "Interface\\Icons\\INV_Misc_Flower_02"
 -- Painel
 ---------------------------------------------------------------------------
 local panel = CreateFrame("Frame", "FarmTimeConfig", UIParent, "BasicFrameTemplateWithInset")
-panel:SetSize(340, 708)
+panel:SetSize(650, 480)
 panel:SetPoint("CENTER")
 panel:SetFrameStrata("DIALOG")
 panel:SetMovable(true)
@@ -27,12 +27,13 @@ title:SetPoint("TOP", panel, "TOP", 0, -5)
 title:SetText("Farm Time")
 
 local controls = {}
-local y = -36
+-- Duas colunas: caixas de seleção à esquerda; sliders, minimapa e idioma à direita.
+local x, y = 16, -36
 
 -- labelKey é uma chave de FT.L (o texto troca junto com o idioma).
 local function AddCheckbox(key, labelKey)
     local cb = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
-    cb:SetPoint("TOPLEFT", 16, y)
+    cb:SetPoint("TOPLEFT", x, y)
     cb.Text:SetFontObject("GameFontHighlight")
     FT:T(cb.Text, labelKey)
     cb:SetScript("OnClick", function(self)
@@ -47,12 +48,12 @@ end
 -- Slider simples, sem template (os templates de slider mudam entre clientes).
 local function AddSlider(key, labelKey, lo, hi, step)
     local text = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    text:SetPoint("TOPLEFT", 22, y - 6)
+    text:SetPoint("TOPLEFT", x + 6, y - 6)
 
     local s = CreateFrame("Slider", nil, panel)
     s:SetOrientation("HORIZONTAL")
-    s:SetSize(260, 16)
-    s:SetPoint("TOPLEFT", 26, y - 24)
+    s:SetSize(270, 16)
+    s:SetPoint("TOPLEFT", x + 10, y - 24)
     s:SetMinMaxValues(lo, hi)
     s:SetValueStep(step)
     if s.SetObeyStepOnDrag then s:SetObeyStepOnDrag(true) end
@@ -99,13 +100,16 @@ AddCheckbox("trackTradeGoods", "CFG_MATS")
 AddCheckbox("hudEnabled",      "CFG_HUD")
 AddCheckbox("manageCVars",     "CFG_CVARS")
 AddCheckbox("debug",           "CFG_DEBUG")
-y = y - 6
+
+x, y = 330, -36
 AddSlider("iconSize",      "CFG_SIZE", 16, 96, 2)
 AddSlider("interactRange", "CFG_RANGE", 5, 60, 1)
 AddSlider("hudRange",      "CFG_HUD_RANGE", 30, 300, 10)
+AddSlider("hudPitch",      "CFG_PITCH", 0, 85, 1)
+AddSlider("hudFov",        "CFG_FOV", 40, 150, 1)
 
 local minimapCB = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
-minimapCB:SetPoint("TOPLEFT", 16, y)
+minimapCB:SetPoint("TOPLEFT", x, y)
 minimapCB.Text:SetFontObject("GameFontHighlight")
 FT:T(minimapCB.Text, "CFG_MINIMAP")
 minimapCB:SetScript("OnClick", function(self)
@@ -118,10 +122,10 @@ y = y - 34
 
 -- Idioma: um botão por idioma, funciona como seleção única.
 local langLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-langLabel:SetPoint("TOPLEFT", 22, y)
+langLabel:SetPoint("TOPLEFT", x + 6, y)
 FT:T(langLabel, "CFG_LANGUAGE")
 y = y - 18
-local langX = 16
+local langX = x
 for _, lang in ipairs(FT.LANGUAGES) do
     local rb = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
     rb:SetPoint("TOPLEFT", langX, y)
@@ -136,22 +140,28 @@ for _, lang in ipairs(FT.LANGUAGES) do
 end
 
 local statusBtn = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-statusBtn:SetSize(96, 22)
+statusBtn:SetSize(110, 22)
 statusBtn:SetPoint("BOTTOMLEFT", 16, 14)
 FT:T(statusBtn, "BTN_STATUS")
 statusBtn:SetScript("OnClick", function() SlashCmdList.FARMTIME("status") end)
 
 local testBtn = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-testBtn:SetSize(96, 22)
-testBtn:SetPoint("BOTTOMRIGHT", -16, 14)
+testBtn:SetSize(110, 22)
+testBtn:SetPoint("LEFT", statusBtn, "RIGHT", 8, 0)
 FT:T(testBtn, "BTN_TEST")
 testBtn:SetScript("OnClick", function() FT:ShowTestAlert() end)
 
 local sessionBtn = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-sessionBtn:SetSize(96, 22)
-sessionBtn:SetPoint("BOTTOM", 0, 14)
+sessionBtn:SetSize(110, 22)
+sessionBtn:SetPoint("LEFT", testBtn, "RIGHT", 8, 0)
 FT:T(sessionBtn, "BTN_SESSION")
 sessionBtn:SetScript("OnClick", function() FT:ToggleSessionWindow() end)
+
+local calibrateBtn = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+calibrateBtn:SetSize(110, 22)
+calibrateBtn:SetPoint("LEFT", sessionBtn, "RIGHT", 8, 0)
+FT:T(calibrateBtn, "BTN_CALIBRATE")
+calibrateBtn:SetScript("OnClick", function() FT:StartCalibration() end)
 
 function FT:RefreshConfig()
     if not panel:IsShown() then return end

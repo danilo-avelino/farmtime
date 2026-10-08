@@ -30,7 +30,8 @@ FT.defaults = {
     hudEnabled    = true,  -- marcadores 3D dos nós salvos
     showPrompt    = true,  -- aviso "aperte F" perto de erva/minério/corpo esfolável
     hudRange      = 150,   -- jardas: nós mais longe que isso não aparecem
-    hudFov        = 90,    -- campo de visão (graus) usado na projeção
+    hudFov        = 90,    -- campo de visão horizontal (graus) usado na projeção
+    hudPitch      = 35,    -- inclinação da câmera para baixo (graus); calibre com /ft calibrate
 }
 
 local function CopyDefaults(src, dst)
@@ -169,6 +170,8 @@ commands.session = function() FT:ToggleSessionWindow() end
 commands.hud    = Toggle("hudEnabled", "OPT_HUD")
 commands.prompt = Toggle("showPrompt", "OPT_PROMPT")
 commands.fov    = Number("hudFov", "OPT_FOV", 40, 150)
+commands.pitch  = Number("hudPitch", "OPT_PITCH", 0, 85)
+commands.calibrate = function() FT:StartCalibration() end
 commands.nodes  = function()
     local total, here = FT:CountNodes()
     FT:Print(string.format(FT.L.NODES_COUNT, total, here))

@@ -62,9 +62,14 @@ sessão com o valor do que foi coletado (preços do Auctionator).
     lê o nome no tooltip e converte a posição do cursor para posição no mundo — ou
     chegue perto até o jogo escolher o nó como alvo de interação.
   - A confirmação vale 5 minutos; depois de coletado, o nó volta a ficar cinza.
-  - A posição na tela é **aproximada** (a API não dá acesso à câmera): acompanha
-    bem andando/girando com o botão direito; girar a câmera com o botão esquerdo
-    não move os ícones. Ajuste com `/ft fov`.
+  - A posição na tela é calculada com um modelo de câmera: distância real da
+    câmera (`GetCameraZoom`) e **ângulo de inclinação configurável** (o jogo não
+    informa a inclinação nem o giro da câmera para addons). **Calibre uma vez:**
+    botão "Calibrate" no painel (ou `/ft calibrate`) deixa um quadrado vermelho
+    onde você está; afaste-se 20-30 jardas, olhe para o local e ajuste "Camera
+    angle" até o quadrado ficar no chão onde você estava. Se mudar muito a
+    inclinação da câmera no jogo, recalibre. Girar a câmera com o botão esquerdo
+    não move os ícones (eles seguem a direção do personagem).
   - Opções no painel (liga/desliga e alcance). `/ft hud`, `/ft nodes`,
     `/ft clearnodes [all]`.
 - **Comandos:** `/ft` abre o painel; `/ft help` lista os demais.

@@ -20,9 +20,7 @@ local _, FT = ...
 local MERGE_DISTANCE   = 12   -- jardas: mesmo nome a menos disso = mesmo nó
 local CONFIRM_DISTANCE = 25   -- jardas: tolerância ao confirmar pelo minimapa
 local CONFIRM_TTL      = 300  -- segundos que uma confirmação vale
-local CAMERA_BACK      = 8    -- distância aproximada da câmera atrás do personagem
-local CAMERA_HEIGHT    = 6
-local HORIZON          = 0.55 -- altura do horizonte na tela (0 = base, 1 = topo)
+local HEAD_HEIGHT      = 2    -- jardas: a câmera mira mais ou menos a cabeça do personagem
 
 local COLORS = {
     herb = { 0.3, 1.0, 0.3 },
@@ -36,7 +34,6 @@ local MINIMAP_YARDS = {
 }
 
 local sqrt, atan2, sin, cos, tan, rad = math.sqrt, math.atan2 or math.atan, math.sin, math.cos, math.tan, math.rad
-local PI, TWO_PI = math.pi, math.pi * 2
 local GetCVar = (C_CVar and C_CVar.GetCVar) or GetCVar
 
 ---------------------------------------------------------------------------
@@ -271,25 +268,54 @@ local function GetMarker(i)
     return m
 end
 
-local function NormalizeAngle(a)
-    a = a % TWO_PI
-    if a > PI then a = a - TWO_PI end
-    return a
+-- Modelo de câmera: atrás do personagem, a GetCameraZoom() jardas, inclinada
+-- "pitch" graus para baixo, mirando a cabeça (que fica no centro da tela).
+-- O jogo não informa a inclinação nem o giro da câmera para addons, então o
+-- ângulo vem da configuração (calibre com /ft calibrate) e o giro é o do
+-- personagem. Retorna x, y na tela (origem embaixo à esquerda) e a
+-- profundidade, ou nil se o ponto estiver fora da tela ou atrás da câmera.
+local function CameraDistance()
+    local ok, zoom = pcall(GetCameraZoom)
+    if ok and type(zoom) == "number" and not (issecretvalue and issecretvalue(zoom)) then return zoom end
+    return 15
 end
 
--- Projeção aproximada. Retorna x, y na tela (origem embaixo à esquerda) e a
--- profundidade, ou nil se o nó estiver fora do campo de visão.
-local function Project(dx, dy, dz, facing, W, H, fov)
-    local rel = NormalizeAngle(atan2(dy, dx) - facing) -- > 0 = à esquerda
-    local halfFov = rad(fov) / 2
-    if math.abs(rel) > halfFov then return nil end
-    local dist = sqrt(dx * dx + dy * dy)
-    local depth = dist * cos(rel) + CAMERA_BACK
+local function Project(dx, dy, dz, facing, W, H)
+    local db = FT.db
+    local pitch = rad(db.hudPitch)
+    local d = CameraDistance()
+    local cf, sf = cos(facing), sin(facing)
+    local cp, sp = cos(pitch), sin(pitch)
+
+    -- Vetor câmera -> ponto, nas direções frente (F), cima (U) e direita (R)
+    -- do personagem. F = (cos f, sin f), R = (sin f, -cos f) no plano x/y.
+    local vF = dx * cf + dy * sf + d * cp
+    local vU = dz - HEAD_HEIGHT - d * sp
+    local vR = dx * sf - dy * cf
+
+    -- Para os eixos da câmera inclinada.
+    local depth = cp * vF - sp * vU
     if depth <= 1 then return nil end
-    local focal = (W / 2) / tan(halfFov)
-    local sx = W / 2 - focal * (dist * sin(rel)) / depth
-    local sy = H * HORIZON - focal * (CAMERA_HEIGHT - dz) / depth
+    local up = cp * vU + sp * vF
+
+    local focal = (W / 2) / tan(rad(db.hudFov) / 2)
+    local sx = W / 2 + focal * vR / depth
+    local sy = H / 2 + focal * up / depth
+    if sx < -40 or sx > W + 40 or sy < -40 or sy > H + 40 then return nil end
     return sx, sy, depth
+end
+
+-- Marcador temporário de calibração: fica onde você estava ao usar /ft calibrate.
+local calibration -- { x, y, z, inst, until }
+
+function FT:StartCalibration()
+    local x, y, z, inst = PlayerPosition()
+    if not x then
+        self:Print(self.L.CALIBRATE_NO_POS)
+        return
+    end
+    calibration = { x = x, y = y, z = z, inst = inst, expires = GetTime() + 300 }
+    self:Print(self.L.CALIBRATE_HELP)
 end
 
 local function UpdateMarkers()
@@ -308,11 +334,11 @@ local function UpdateMarkers()
             -- O nó que já é alvo de interação ganha a placa grande; não duplica.
             local isTarget = target and n.name == target and d2 < MERGE_DISTANCE * MERGE_DISTANCE
             if d2 <= range2 and not isTarget then
-                local sx, sy, depth = Project(n.x - x, n.y - y, (n.z and z) and (n.z - z) or 0, facing, W, H, db.hudFov)
+                local sx, sy, depth = Project(n.x - x, n.y - y, (n.z and z) and (n.z - z) or 0, facing, W, H)
                 if sx then
                     used = used + 1
                     local m = GetMarker(used)
-                    local size = math.max(14, math.min(40, db.iconSize * 22 / depth))
+                    local size = math.max(14, math.min(40, db.iconSize * 30 / depth))
                     local confirmed = IsConfirmed(n)
                     local c = COLORS[n.kind] or COLORS.herb
 
@@ -331,6 +357,29 @@ local function UpdateMarkers()
                     m.text:SetFormattedText(FT.L.HUD_DISTANCE, math.floor(sqrt(d2) + 0.5))
                     m:Show()
                 end
+            end
+        end
+    end
+    -- Marcador de calibração (losango branco no ponto salvo).
+    if calibration and x and facing and db.hudEnabled then
+        if GetTime() > calibration.expires or calibration.inst ~= inst then
+            calibration = nil
+        else
+            local cz = (calibration.z and z) and (calibration.z - z) or 0
+            local sx, sy, depth = Project(calibration.x - x, calibration.y - y, cz, facing, overlay:GetWidth(), overlay:GetHeight())
+            if sx then
+                used = used + 1
+                local m = GetMarker(used)
+                m:SetSize(20, 20)
+                m:ClearAllPoints()
+                m:SetPoint("CENTER", overlay, "BOTTOMLEFT", sx, sy)
+                m.icon:SetTexture("Interface\\Buttons\\WHITE8X8")
+                m.icon:SetDesaturated(false)
+                m.bg:SetColorTexture(1, 0.2, 0.2, 1)
+                m:SetAlpha(1)
+                local dist = sqrt((calibration.x - x) ^ 2 + (calibration.y - y) ^ 2)
+                m.text:SetFormattedText(FT.L.HUD_DISTANCE, math.floor(dist + 0.5))
+                m:Show()
             end
         end
     end
