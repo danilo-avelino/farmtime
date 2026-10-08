@@ -1,5 +1,10 @@
 # Farm Time — Changelog
 
+## v1.5.4
+
+- **Fixed:** nodes were confirmed by the tooltips of other addons' minimap pins (GatherLite, GatherMate2, HandyNotes, Questie…). Those pins mark where a node used to be, not where it is now. Only the game's own minimap tracking dots confirm nodes now.
+- **Debug:** with "Debug in chat" on, each confirmation prints `confirmed: <node>`.
+
 ## v1.5.3
 
 - **Option renamed:** "Show unavailable herbs/ores (grey)". It controls whether nodes that are not confirmed, or were already gathered, are shown in grey or hidden (default: hidden). Also available as `/ft grey`.

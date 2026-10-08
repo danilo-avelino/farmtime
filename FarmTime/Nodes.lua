@@ -180,6 +180,9 @@ local function Confirm(name, x, y, inst, tolerance, grace)
     if not node then return end
     if grace and node.gatheredAt and time() - node.gatheredAt < grace then return end
     node.missSince = nil
+    if FT.db.debug and not IsConfirmed(node) then
+        FT:Print(string.format(FT.L.NODE_CONFIRMED, node.name))
+    end
     local was = IsConfirmed(node)
     node.confirmedAt = time()
     -- Só avisa os outros na mudança "não confirmado -> confirmado".
@@ -248,8 +251,25 @@ end
 local MISS_PIXELS = 4    -- quão perto (em pixels do minimapa) o cursor precisa estar do nó
 local MISS_TIME   = 0.5
 
+-- Frame sob o mouse (GetMouseFoci nos clientes novos, GetMouseFocus nos antigos).
+local function MouseFocus()
+    if GetMouseFoci then
+        local ok, foci = pcall(GetMouseFoci)
+        if ok and type(foci) == "table" then return foci[1] end
+    end
+    if GetMouseFocus then
+        local ok, f = pcall(GetMouseFocus)
+        if ok then return f end
+    end
+end
+
 local function ScanMinimapTooltip()
     if not Minimap:IsMouseOver() then return end
+    -- Se o mouse está sobre um marcador de OUTRO addon no minimapa (GatherLite,
+    -- GatherMate2, HandyNotes, Questie...), o tooltip é desse marcador e mostra
+    -- onde a erva JÁ EXISTIU, não o ponto de rastreamento do jogo. Ignora.
+    local focus = MouseFocus()
+    if focus and focus ~= Minimap then return end
     local x, y, inst, perPixel = CursorWorldPosition()
     if not x then return end
 

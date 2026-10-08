@@ -62,7 +62,9 @@ sessão com o valor do que foi coletado (preços do Auctionator).
     "Show unavailable herbs/ores (grey)" no painel ou use `/ft grey`.
   - Confirmar: passe o mouse sobre o
     ponto do nó no **minimapa** (rastreamento de ervas/minérios ligado) — o addon
-    lê o nome no tooltip e converte a posição do cursor para posição no mundo — ou
+    lê o nome no tooltip e converte a posição do cursor para posição no mundo;
+    tooltips de marcadores de outros addons no minimapa (GatherLite, GatherMate2,
+    HandyNotes...) são ignorados, porque mostram onde o nó já existiu — ou
     chegue perto até o jogo escolher o nó como alvo de interação.
   - A confirmação vale 5 minutos; depois de coletado, o nó volta a ficar cinza
     e não é reconfirmado pela proximidade por 2 minutos (pelo minimapa, 15 s).
