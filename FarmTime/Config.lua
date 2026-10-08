@@ -10,7 +10,7 @@ local ICON = "Interface\\Icons\\INV_Misc_Flower_02"
 -- Painel
 ---------------------------------------------------------------------------
 local panel = CreateFrame("Frame", "FarmTimeConfig", UIParent, "BasicFrameTemplateWithInset")
-panel:SetSize(340, 600)
+panel:SetSize(340, 680)
 panel:SetPoint("CENTER")
 panel:SetFrameStrata("DIALOG")
 panel:SetMovable(true)
@@ -95,11 +95,13 @@ AddCheckbox("bindInteractKey", "CFG_KEY")
 AddCheckbox("fastLoot",        "CFG_FASTLOOT")
 AddCheckbox("sessionWindow",   "CFG_SESSION")
 AddCheckbox("trackTradeGoods", "CFG_MATS")
+AddCheckbox("hudEnabled",      "CFG_HUD")
 AddCheckbox("manageCVars",     "CFG_CVARS")
 AddCheckbox("debug",           "CFG_DEBUG")
 y = y - 6
 AddSlider("iconSize",      "CFG_SIZE", 16, 96, 2)
 AddSlider("interactRange", "CFG_RANGE", 5, 60, 1)
+AddSlider("hudRange",      "CFG_HUD_RANGE", 30, 300, 10)
 
 local minimapCB = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
 minimapCB:SetPoint("TOPLEFT", 16, y)

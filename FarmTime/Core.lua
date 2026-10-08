@@ -26,6 +26,10 @@ FT.defaults = {
     sessionWindow = true,  -- janela da sessão abre sozinha ao coletar
     trackTradeGoods = true, -- sessão também conta materiais (carne, pano, couro...)
     language      = "enUS", -- "enUS" ou "ptBR"
+    nodes         = {},    -- [instanceID] = { {x=, y=, z=, name=, kind=, gatheredAt=, confirmedAt=}, ... }
+    hudEnabled    = true,  -- marcadores 3D dos nós salvos
+    hudRange      = 150,   -- jardas: nós mais longe que isso não aparecem
+    hudFov        = 90,    -- campo de visão (graus) usado na projeção
 }
 
 local function CopyDefaults(src, dst)
@@ -85,7 +89,7 @@ FT:RegisterEvent("ADDON_LOADED", function(self, name)
     if name ~= ADDON_NAME then return end
     FarmTimeDB = FarmTimeDB or {}
     -- Remove dados da versão 0.1 (HUD por posição), que não são mais usados.
-    FarmTimeDB.nodes, FarmTimeDB.fov, FarmTimeDB.cameraHeight = nil, nil, nil
+    FarmTimeDB.fov, FarmTimeDB.cameraHeight = nil, nil
     FarmTimeDB.maxRange, FarmTimeDB.updateRate, FarmTimeDB.showEdgeArrows = nil, nil, nil
     FarmTimeDB.showBanner, FarmTimeDB.pulse = nil, nil
     -- 0.7: visual de placa; o ícone ficou menor por padrão.
@@ -160,6 +164,16 @@ commands.sound  = Toggle("sound", "OPT_SOUND")
 commands.loot   = Toggle("fastLoot", "OPT_FASTLOOT")
 commands.mats   = Toggle("trackTradeGoods", "OPT_MATS")
 commands.session = function() FT:ToggleSessionWindow() end
+commands.hud    = Toggle("hudEnabled", "OPT_HUD")
+commands.fov    = Number("hudFov", "OPT_FOV", 40, 150)
+commands.nodes  = function()
+    local total, here = FT:CountNodes()
+    FT:Print(string.format(FT.L.NODES_COUNT, total, here))
+end
+commands.clearnodes = function(arg)
+    FT:ClearNodes(arg == "all")
+    FT:Print(arg == "all" and FT.L.NODES_CLEARED_ALL or FT.L.NODES_CLEARED)
+end
 commands.reset  = function() FT:ResetSession(); FT:Print(FT.L.SESSION_CLEARED) end
 commands.debug  = Toggle("debug", "OPT_DEBUG")
 commands.minimap = function()

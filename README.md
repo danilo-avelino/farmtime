@@ -44,6 +44,19 @@ sessão com o valor do que foi coletado (preços do Auctionator).
   botão **Reset**. É móvel (arraste) e lembra a posição. A sessão fica só na
   memória: ao relogar (ou `/reload`) ela zera e a janela some até a próxima
   coleta, quando reaparece sozinha. `/ft session` mostra/esconde; `/ft reset` zera.
+- **Nós salvos na visão (HUD):** toda erva/minério coletado tem a posição
+  gravada. Quando você volta à área, o ícone do recurso aparece **na visão do
+  personagem**, na direção e distância do nó, com a distância embaixo.
+  - **Cinza** = não confirmado. **Colorido** = confirmado: passe o mouse sobre o
+    ponto do nó no **minimapa** (rastreamento de ervas/minérios ligado) — o addon
+    lê o nome no tooltip e converte a posição do cursor para posição no mundo — ou
+    chegue perto até o jogo escolher o nó como alvo de interação.
+  - A confirmação vale 5 minutos; depois de coletado, o nó volta a ficar cinza.
+  - A posição na tela é **aproximada** (a API não dá acesso à câmera): acompanha
+    bem andando/girando com o botão direito; girar a câmera com o botão esquerdo
+    não move os ícones. Ajuste com `/ft fov`.
+  - Opções no painel (liga/desliga e alcance). `/ft hud`, `/ft nodes`,
+    `/ft clearnodes [all]`.
 - **Comandos:** `/ft` abre o painel; `/ft help` lista os demais.
 
 ## Estrutura
@@ -55,6 +68,7 @@ sessão com o valor do que foi coletado (preços do Auctionator).
 | `Locale.lua` | Textos em inglês (padrão) e português (BR) e troca de idioma |
 | `Detection.lua` | Decide se o objeto é erva, minério ou outra coisa (listas do Classic + nomes aprendidos ao coletar) |
 | `Highlight.lua` | Liga as opções de alvo de interação do jogo e mostra o alerta |
+| `Nodes.lua` | Guarda a posição dos nós coletados, confirma pelo minimapa e desenha os marcadores 3D |
 | `Keybind.lua` | Liga a tecla F ao "Interagir com o alvo" e guarda o atalho anterior |
 | `Loot.lua` | Fast loot e registro do que foi saqueado de coletas e dos materiais de profissão |
 | `Session.lua` | Janela da sessão: itens, valores do Auctionator, total, timer e reset |

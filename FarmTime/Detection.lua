@@ -106,7 +106,7 @@ FT:RegisterUnitEvent("UNIT_SPELLCAST_SENT", "player", function(self, unit, targe
     local spellName = spellID and GetSpellName(spellID)
     local kind = spellName and spellNameToKind[spellName]
     if not kind then return end
-    self.gatherContext = { kind = kind, name = target, time = GetTime() }
+    self.gatherContext = { kind = kind, name = target, time = GetTime(), castGUID = castGUID }
     -- Só ervas e minérios entram na lista de nomes de nós (skinning é em criaturas).
     if kind ~= "skin" and target and target ~= "" and self.db.names[target] ~= kind then
         self.db.names[target] = kind
