@@ -9,8 +9,11 @@ sessão com o valor do que foi coletado (preços do Auctionator).
 
 ## Instalação (uso local)
 
-1. Copie a pasta `FarmTime/` para `World of Warcraft/<versão>/Interface/AddOns/`
-   (a pasta do cliente que você usa para o Classic/Forever).
+1. Baixe o **[FarmTime.zip](https://github.com/danilo-avelino/farmtime/raw/claude/farm-time-wow-addon-9ehzt2/FarmTime.zip)**
+   (contém só a pasta `FarmTime`) e extraia em
+   `World of Warcraft/<versão>/Interface/AddOns/` (a pasta do cliente que você
+   usa para o Classic/Forever). Ao atualizar, apague a pasta `FarmTime` antiga
+   antes de extrair.
 2. O `.toc` declara `## Interface: 16001, 11509` (WoW Forever beta e Classic Era).
    Se o addon aparecer como desatualizado, rode `/dump select(4, GetBuildInfo())`
    e coloque o número na linha `## Interface:` (ou marque "Carregar add-ons
@@ -68,6 +71,7 @@ sessão com o valor do que foi coletado (preços do Auctionator).
 
 | Arquivo | Função |
 |---|---|
+| `build.sh` | Gera o `FarmTime.zip` (só a pasta `FarmTime`); rodar a cada atualização |
 | `FarmTime.toc` | Metadados, SavedVariables (`FarmTimeDB`) e ordem de carregamento |
 | `Core.lua` | Configurações padrão, despacho de eventos, comandos `/ft` |
 | `Locale.lua` | Textos em inglês (padrão) e português (BR) e troca de idioma |
