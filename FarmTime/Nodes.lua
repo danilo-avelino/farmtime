@@ -167,11 +167,19 @@ local function IsConfirmed(node)
     return time() - node.confirmedAt < CONFIRM_TTL
 end
 
-local function Confirm(name, x, y, inst, tolerance)
+-- grace: segundos após a coleta em que o nó NÃO pode ser reconfirmado
+-- (o objeto ainda existe enquanto o saque está aberto e o ponto do minimapa
+-- demora um pouco para sumir).
+local GRACE_NEAR    = 120
+local GRACE_MINIMAP = 15
+
+local function Confirm(name, x, y, inst, tolerance, grace)
     local list = NodesHere(inst)
     if not list then return end
     local node = FindNode(list, name, x, y, tolerance)
     if not node then return end
+    if grace and node.gatheredAt and time() - node.gatheredAt < grace then return end
+    node.missSince = nil
     local was = IsConfirmed(node)
     node.confirmedAt = time()
     -- Só avisa os outros na mudança "não confirmado -> confirmado".
@@ -199,7 +207,7 @@ end
 -- a) Alvo de interação do jogo (você está perto do nó).
 function FT:ConfirmNodeNearPlayer(name)
     local x, y, _, inst = PlayerPosition()
-    if x and name then Confirm(name, x, y, inst, MERGE_DISTANCE) end
+    if x and name then Confirm(name, x, y, inst, MERGE_DISTANCE, GRACE_NEAR) end
 end
 
 -- b) Tooltip do minimapa: posição do cursor no minimapa -> posição no mundo.
@@ -226,25 +234,54 @@ local function CursorWorldPosition()
         upX, upY = cos(f), sin(f)
         rightX, rightY = sin(f), -cos(f)
     end
-    return px + up * upX + right * rightX, py + up * upY + right * rightY, inst
+    return px + up * upX + right * rightX, py + up * upY + right * rightY, inst, perPixel
 end
 
 local function CleanLine(text)
     return text:gsub("|T.-|t", ""):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
 end
 
+-- Mouse sobre o minimapa:
+--  * o tooltip traz o nome de um nó salvo naquele ponto -> confirmado;
+--  * o cursor está bem em cima de um nó confirmado e o tooltip NÃO traz o
+--    nome dele (meio segundo seguido) -> o ponto não está lá; perde a confirmação.
+local MISS_PIXELS = 4    -- quão perto (em pixels do minimapa) o cursor precisa estar do nó
+local MISS_TIME   = 0.5
+
 local function ScanMinimapTooltip()
-    if not (GameTooltip:IsShown() and Minimap:IsMouseOver()) then return end
-    local x, y, inst = CursorWorldPosition()
+    if not Minimap:IsMouseOver() then return end
+    local x, y, inst, perPixel = CursorWorldPosition()
     if not x then return end
-    for i = 1, GameTooltip:NumLines() do
-        local fs = _G["GameTooltipTextLeft" .. i]
-        local text = fs and fs:GetText()
-        if text then
-            for line in CleanLine(text):gmatch("[^\n]+") do
-                local name = line:match("^%s*(.-)%s*$")
-                if name ~= "" then Confirm(name, x, y, inst, CONFIRM_DISTANCE) end
+
+    local names = {}
+    if GameTooltip:IsShown() then
+        for i = 1, GameTooltip:NumLines() do
+            local fs = _G["GameTooltipTextLeft" .. i]
+            local text = fs and fs:GetText()
+            if text then
+                for line in CleanLine(text):gmatch("[^\n]+") do
+                    local name = line:match("^%s*(.-)%s*$")
+                    if name ~= "" then
+                        names[name] = true
+                        Confirm(name, x, y, inst, CONFIRM_DISTANCE, GRACE_MINIMAP)
+                    end
+                end
             end
+        end
+    end
+
+    local list = NodesHere(inst)
+    if not list then return end
+    local near = math.max(6, MISS_PIXELS * perPixel)
+    for _, n in ipairs(list) do
+        if n.confirmedAt and not names[n.name] and Distance2(n, x, y) <= near * near then
+            n.missSince = n.missSince or GetTime()
+            if GetTime() - n.missSince >= MISS_TIME then
+                n.confirmedAt, n.missSince = nil, nil
+                if FT.db.debug then FT:Print(string.format(FT.L.NODE_MISSING, n.name)) end
+            end
+        elseif n.missSince and names[n.name] then
+            n.missSince = nil
         end
     end
 end

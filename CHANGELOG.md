@@ -1,5 +1,10 @@
 # Farm Time — Changelog
 
+## v1.5.2
+
+- **Fixed:** a node you just gathered could be re-confirmed while its loot window was still open, so it kept showing. Proximity can no longer re-confirm a node for 2 minutes after you gather it (minimap: 15 seconds).
+- **New:** hovering the minimap exactly over a confirmed node with no tracking dot there for half a second unconfirms it, and it disappears from your view.
+
 ## v1.5.1
 
 - **Fixed:** saved-node markers and the arrow showed the wrong distance and direction (the distance grew as you walked toward a node). The world position axes were swapped when reading the player position.

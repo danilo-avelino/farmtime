@@ -64,7 +64,10 @@ sessão com o valor do que foi coletado (preços do Auctionator).
     ponto do nó no **minimapa** (rastreamento de ervas/minérios ligado) — o addon
     lê o nome no tooltip e converte a posição do cursor para posição no mundo — ou
     chegue perto até o jogo escolher o nó como alvo de interação.
-  - A confirmação vale 5 minutos; depois de coletado, o nó volta a ficar cinza.
+  - A confirmação vale 5 minutos; depois de coletado, o nó volta a ficar cinza
+    e não é reconfirmado pela proximidade por 2 minutos (pelo minimapa, 15 s).
+  - Passar o mouse no minimapa exatamente em cima de um nó confirmado, sem o
+    ponto dele ali, por meio segundo: o nó perde a confirmação e some.
   - A posição na tela é calculada com um modelo de câmera: distância real da
     câmera (`GetCameraZoom`) e **ângulo de inclinação configurável** (o jogo não
     informa a inclinação nem o giro da câmera para addons). **Calibre uma vez:**
