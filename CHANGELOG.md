@@ -1,0 +1,40 @@
+# Farm Time — Changelog
+
+## v1.5.0 — First public release
+
+**Game version:** WoW Forever (Classic+) beta 1.60.1 (interface 16001). Also declared for Classic Era 1.15.9 (11509).
+**Optional:** Auctionator (for item prices in the session window).
+
+### Gathering helper
+- **Node highlight:** when the herb or ore in front of you becomes the interact target, a nameplate-style plate (item icon, name, type) appears above the node. Green border for herbs, orange for ores.
+- **Hide the game's label:** optionally hides the game's own small name/icon above the node so only one label is shown.
+- **"Press F" prompt:** shows `[F] Gather Kingsblood`, `[F] Mine Copper Vein` or `[F] Skin Plainstrider`, only when you are actually in range to gather or skin.
+- **F to gather:** binds F to the game's "Interact with Target" action. Your previous F binding is saved and can be restored from the settings panel.
+- **Fast loot:** loots everything instantly. Hold Shift to skip it for that loot.
+
+### Saved nodes, 3D markers and arrow
+- **Saved nodes:** every herb and ore you gather is saved with its location.
+- **In-world markers:** saved nodes are shown in your field of view, at the node's direction and distance, with the distance in yards.
+- **Confirmed nodes only (default):** a node is confirmed when you hover its tracking dot on the minimap (Find Herbs/Minerals on), or when you get close to it. A confirmation lasts 5 minutes; gathering the node clears it. Unconfirmed nodes can optionally be shown in grey.
+- **Camera calibration:** markers use the real camera distance plus an adjustable camera angle. Use the "Calibrate" button once to line the markers up with the ground.
+- **Arrow:** a TomTom-style arrow points to the nearest confirmed node, with its icon, name and distance. The arrow can be dragged.
+
+### Sharing
+- **Share with guild and/or party/raid (off by default):** confirmed and gathered nodes are sent to other Farm Time users through the official addon message channel. Nothing appears in chat.
+
+### Session window
+- **What it tracks:** herbs, ores, skinning, fishing and trade goods (cloth, meat, leather, elementals…) looted during the session.
+- **Value:** quantity times the last price Auctionator saw, plus a running total.
+- **Timer and reset:** a timer counts from the first item of the session, and a Reset button clears it.
+- **Behavior:** the window can be moved. It hides on login and reopens on your next gather.
+
+### General
+- **Settings and minimap:** settings panel and minimap button. No external libraries.
+- **Languages:** English (default) and Português (BR), switchable in the panel or with `/ft lang`.
+- **Diagnostics:** `/ft status` shows client, position and sharing info.
+- **Commands:** `/ft` opens the panel; `/ft help` lists all commands.
+
+### Known limitations
+- **Detection range:** addons cannot list objects in the world. Live highlighting only works for the node the game picks as your interact target, which happens at close range.
+- **Approximate markers:** the game does not expose camera rotation to addons. In-world markers follow your character's facing; rotating the camera with the left mouse button does not move them.
+- **Manual confirmation:** minimap tracking dots cannot be read by addons. Confirming a node requires hovering its dot or getting close to it.
