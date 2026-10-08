@@ -77,6 +77,13 @@ sessão com o valor do que foi coletado (preços do Auctionator).
     próximo (até 400 jardas), com o ícone, o nome e a distância; verde para
     erva, laranja para minério. Arraste para mudar de lugar (a posição fica
     salva). `/ft arrow` liga/desliga, `/ft arrowrange <jd>` muda o alcance.
+  - **Visual:** marcadores, seta e placa sobre o nó usam o mesmo estilo de
+    "placa" (fundo escuro, borda e faixa na cor do recurso, ícone emoldurado).
+  - **Compartilhar:** opções "Share nodes with my guild" e "... party/raid"
+    (desligadas por padrão; `/ft shareguild`, `/ft sharegroup`). Quando você
+    confirma um nó, quem tem o Farm Time na guilda/grupo também o vê confirmado;
+    quando alguém coleta, ele some para todos. Usa o canal oficial de mensagens
+    entre addons (`C_ChatInfo.SendAddonMessage`), sem aparecer no chat.
   - Opções no painel (liga/desliga e alcance). `/ft hud`, `/ft nodes`,
     `/ft clearnodes [all]`.
 - **Comandos:** `/ft` abre o painel; `/ft help` lista os demais.
@@ -92,6 +99,8 @@ sessão com o valor do que foi coletado (preços do Auctionator).
 | `Detection.lua` | Decide se o objeto é erva, minério ou outra coisa (listas do Classic + nomes aprendidos ao coletar) |
 | `Highlight.lua` | Liga as opções de alvo de interação do jogo e mostra o alerta |
 | `Prompt.lua` | Aviso "aperte F para coletar/minerar/esfolar" |
+| `Style.lua` | Estilo de placa compartilhado (placa, marcadores, seta) |
+| `Share.lua` | Compartilhamento de nós com guilda e grupo (mensagens de addon) |
 | `Nodes.lua` | Guarda a posição dos nós coletados, confirma pelo minimapa e desenha os marcadores 3D |
 | `Keybind.lua` | Liga a tecla F ao "Interagir com o alvo" e guarda o atalho anterior |
 | `Loot.lua` | Fast loot e registro do que foi saqueado de coletas e dos materiais de profissão |

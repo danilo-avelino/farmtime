@@ -22,10 +22,7 @@ local CONFIRM_DISTANCE = 25   -- jardas: tolerância ao confirmar pelo minimapa
 local CONFIRM_TTL      = 300  -- segundos que uma confirmação vale
 local HEAD_HEIGHT      = 2    -- jardas: a câmera mira mais ou menos a cabeça do personagem
 
-local COLORS = {
-    herb = { 0.3, 1.0, 0.3 },
-    ore  = { 1.0, 0.7, 0.2 },
-}
+local COLORS = FT.Style.COLORS
 
 -- Diâmetro (jardas) da área mostrada no minimapa em cada nível de zoom.
 local MINIMAP_YARDS = {
@@ -138,6 +135,7 @@ function FT:RecordNode(kind, name)
     node.gatheredAt = time()
     node.confirmedAt = nil
     self.lastRecordAt = GetTime()
+    if self.ShareNode then self:ShareNode("G", node, inst) end
 end
 
 FT:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player", function(self, unit, castGUID)
@@ -162,17 +160,39 @@ end)
 ---------------------------------------------------------------------------
 -- Confirmação
 ---------------------------------------------------------------------------
-local function Confirm(name, x, y, inst, tolerance)
-    local list = NodesHere(inst)
-    if not list then return end
-    local node = FindNode(list, name, x, y, tolerance)
-    if node then node.confirmedAt = time() end
-end
-
 local function IsConfirmed(node)
     if not node.confirmedAt then return false end
     if node.gatheredAt and node.gatheredAt >= node.confirmedAt then return false end
     return time() - node.confirmedAt < CONFIRM_TTL
+end
+
+local function Confirm(name, x, y, inst, tolerance)
+    local list = NodesHere(inst)
+    if not list then return end
+    local node = FindNode(list, name, x, y, tolerance)
+    if not node then return end
+    local was = IsConfirmed(node)
+    node.confirmedAt = time()
+    -- Só avisa os outros na mudança "não confirmado -> confirmado".
+    if not was and FT.ShareNode then FT:ShareNode("C", node, inst) end
+end
+
+-- Nó recebido de outro jogador (Share.lua). code: "C" = confirmado agora,
+-- "G" = coletado agora (sumiu). Cria o nó se você ainda não tinha.
+function FT:ApplySharedNode(code, inst, x, y, kind, name)
+    if not (name and (kind == "herb" or kind == "ore")) then return end
+    local list = NodesHere(inst, true)
+    local node = FindNode(list, name, x, y, MERGE_DISTANCE)
+    if not node then
+        node = { x = x, y = y, name = name, kind = kind, count = 0, shared = true }
+        table.insert(list, node)
+    end
+    if code == "C" then
+        node.confirmedAt = time()
+    elseif code == "G" then
+        node.gatheredAt = time()
+        node.confirmedAt = nil
+    end
 end
 
 -- a) Alvo de interação do jogo (você está perto do nó).
@@ -252,20 +272,19 @@ overlay:EnableMouse(false)
 
 local markers = {}
 
+-- Cada marcador é uma placa compacta: ícone do recurso + distância.
 local function GetMarker(i)
     local m = markers[i]
     if m then return m end
-    m = CreateFrame("Frame", nil, overlay)
-    m.bg = m:CreateTexture(nil, "BACKGROUND")
-    m.bg:SetPoint("TOPLEFT", -2, 2)
-    m.bg:SetPoint("BOTTOMRIGHT", 2, -2)
-    m.icon = m:CreateTexture(nil, "ARTWORK")
-    m.icon:SetAllPoints()
-    m.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-    m.text = m:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    m.text:SetPoint("TOP", m, "BOTTOM", 0, -2)
+    m = FT.Style.CreatePlate(overlay, { titleFont = "GameFontHighlightSmall", barHeight = 2 })
     markers[i] = m
     return m
+end
+
+-- Põe a placa com o centro do ícone exatamente no ponto projetado.
+local function PlaceMarker(m, sx, sy, size)
+    m:ClearAllPoints()
+    m:SetPoint("LEFT", overlay, "BOTTOMLEFT", sx - size / 2 - 4, sy)
 end
 
 -- Modelo de câmera: atrás do personagem, a GetCameraZoom() jardas, inclinada
@@ -337,16 +356,9 @@ arrow.tex = arrow:CreateTexture(nil, "ARTWORK")
 arrow.tex:SetAllPoints()
 arrow.tex:SetTexture(ARROW_TEXTURE)
 
-arrow.icon = arrow:CreateTexture(nil, "ARTWORK")
-arrow.icon:SetSize(18, 18)
-arrow.icon:SetPoint("TOPRIGHT", arrow, "BOTTOM", -2, -4)
-arrow.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-
-arrow.name = arrow:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-arrow.name:SetPoint("LEFT", arrow.icon, "RIGHT", 4, 0)
-
-arrow.dist = arrow:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-arrow.dist:SetPoint("TOP", arrow.icon, "BOTTOM", 10, -3)
+-- Embaixo da seta, a mesma placa dos nós: [ícone] Nome / distância.
+arrow.plate = FT.Style.CreatePlate(arrow)
+arrow.plate:SetPoint("TOP", arrow, "BOTTOM", 0, -2)
 
 arrow:SetScript("OnDragStart", arrow.StartMoving)
 arrow:SetScript("OnDragStop", function(self)
@@ -388,18 +400,13 @@ local function UpdateArrow(list, x, y, facing)
     local rel = atan2(best.y - y, best.x - x) - facing
     arrow.tex:SetRotation(rel)
 
-    local c = COLORS[best.kind] or COLORS.herb
     local confirmed = IsConfirmed(best)
-    if confirmed then
-        arrow.tex:SetVertexColor(c[1], c[2], c[3])
-    else
-        arrow.tex:SetVertexColor(0.6, 0.6, 0.6)
-    end
-    arrow.icon:SetTexture(FT:GetNodeIcon(best.name) or "Interface\\Icons\\INV_Misc_QuestionMark")
-    arrow.icon:SetDesaturated(not confirmed)
-    arrow.name:SetText(best.name or "")
-    arrow.name:SetTextColor(c[1], c[2], c[3])
-    arrow.dist:SetFormattedText(FT.L.HUD_DISTANCE, math.floor(sqrt(bestD2) + 0.5))
+    local c = confirmed and (COLORS[best.kind] or COLORS.herb) or COLORS.grey
+    arrow.tex:SetVertexColor(c[1], c[2], c[3])
+    arrow.plate:SetContent(FT:GetNodeIcon(best.name) or "Interface\\Icons\\INV_Misc_QuestionMark",
+        best.name, string.format(FT.L.HUD_DISTANCE, math.floor(sqrt(bestD2) + 0.5)),
+        COLORS[best.kind] or COLORS.herb, 24, not confirmed)
+    arrow.plate:SetAlpha(1)
     arrow:Show()
 end
 
@@ -424,22 +431,12 @@ local function UpdateMarkers()
                 if sx then
                     used = used + 1
                     local m = GetMarker(used)
-                    local size = math.max(14, math.min(40, db.iconSize * 30 / depth))
-                    local c = COLORS[n.kind] or COLORS.herb
-
-                    m:SetSize(size, size)
-                    m:ClearAllPoints()
-                    m:SetPoint("CENTER", overlay, "BOTTOMLEFT", sx, sy)
-                    m.icon:SetTexture(FT:GetNodeIcon(n.name) or "Interface\\Icons\\INV_Misc_QuestionMark")
-                    m.icon:SetDesaturated(not confirmed)
-                    if confirmed then
-                        m.bg:SetColorTexture(c[1], c[2], c[3], 0.9)
-                        m:SetAlpha(1)
-                    else
-                        m.bg:SetColorTexture(0, 0, 0, 0.7)
-                        m:SetAlpha(0.55)
-                    end
-                    m.text:SetFormattedText(FT.L.HUD_DISTANCE, math.floor(sqrt(d2) + 0.5))
+                    local size = math.floor(math.max(14, math.min(40, db.iconSize * 30 / depth)))
+                    m.icon:SetVertexColor(1, 1, 1)
+                    m:SetContent(FT:GetNodeIcon(n.name) or "Interface\\Icons\\INV_Misc_QuestionMark",
+                        string.format(FT.L.HUD_DISTANCE, math.floor(sqrt(d2) + 0.5)), nil,
+                        COLORS[n.kind] or COLORS.herb, size, not confirmed)
+                    PlaceMarker(m, sx, sy, size)
                     m:Show()
                 end
             end
@@ -455,15 +452,11 @@ local function UpdateMarkers()
             if sx then
                 used = used + 1
                 local m = GetMarker(used)
-                m:SetSize(20, 20)
-                m:ClearAllPoints()
-                m:SetPoint("CENTER", overlay, "BOTTOMLEFT", sx, sy)
-                m.icon:SetTexture("Interface\\Buttons\\WHITE8X8")
-                m.icon:SetDesaturated(false)
-                m.bg:SetColorTexture(1, 0.2, 0.2, 1)
-                m:SetAlpha(1)
                 local dist = sqrt((calibration.x - x) ^ 2 + (calibration.y - y) ^ 2)
-                m.text:SetFormattedText(FT.L.HUD_DISTANCE, math.floor(dist + 0.5))
+                m:SetContent("Interface\\Buttons\\WHITE8X8",
+                    string.format(FT.L.HUD_DISTANCE, math.floor(dist + 0.5)), nil, { 1, 0.25, 0.25 }, 16)
+                m.icon:SetVertexColor(1, 0.25, 0.25)
+                PlaceMarker(m, sx, sy, 16)
                 m:Show()
             end
         end

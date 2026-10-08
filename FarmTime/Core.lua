@@ -31,6 +31,8 @@ FT.defaults = {
     hudShowUnconfirmed = false, -- também mostrar (em cinza) nós ainda não confirmados
     arrowEnabled  = true,  -- seta para o nó confirmado mais próximo
     arrowRange    = 400,   -- jardas: alcance da seta
+    shareGuild    = false, -- compartilhar nós (confirmados/coletados) com a guilda
+    shareGroup    = false, -- compartilhar nós com o grupo/raide
     showPrompt    = true,  -- aviso "aperte F" perto de erva/minério/corpo esfolável
     hudRange      = 150,   -- jardas: nós mais longe que isso não aparecem
     hudFov        = 90,    -- campo de visão horizontal (graus) usado na projeção
@@ -173,6 +175,8 @@ commands.session = function() FT:ToggleSessionWindow() end
 commands.hud    = Toggle("hudEnabled", "OPT_HUD")
 commands.grey   = Toggle("hudShowUnconfirmed", "OPT_GREY")
 commands.arrow  = Toggle("arrowEnabled", "OPT_ARROW")
+commands.shareguild = Toggle("shareGuild", "OPT_SHARE_GUILD")
+commands.sharegroup = Toggle("shareGroup", "OPT_SHARE_GROUP")
 commands.arrowrange = Number("arrowRange", "OPT_ARROW_RANGE", 50, 2000)
 commands.prompt = Toggle("showPrompt", "OPT_PROMPT")
 commands.fov    = Number("hudFov", "OPT_FOV", 40, 150)
@@ -224,6 +228,10 @@ commands.status = function()
         print("  " .. FT.L.STATUS_TARGET .. ": " .. tostring(name) .. " / " .. tostring(kind) .. " / " .. tostring(guid))
     else
         print("  " .. FT.L.STATUS_TARGET .. ": " .. FT.L.STATUS_ERROR .. " " .. tostring(guid))
+    end
+    if FT.ShareStatus then
+        local oks, text = pcall(FT.ShareStatus, FT)
+        print("  " .. tostring(text))
     end
     if FT.PositionStatus then
         local okp, text = pcall(FT.PositionStatus, FT)
