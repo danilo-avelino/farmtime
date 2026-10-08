@@ -4,7 +4,7 @@
 ## Notes: Highlights the herb/ore in front of you, F to gather, fast loot and a session window with Auctionator prices.
 ## Notes-ptBR: Destaca a erva/minério à frente, coleta com F, fast loot e janela da sessão com preços do Auctionator.
 ## Author: Danilo Avelino
-## Version: 1.5.4
+## Version: 1.5.5
 ## SavedVariables: FarmTimeDB
 ## IconTexture: Interface\Icons\INV_Misc_Flower_02
 

@@ -1,5 +1,10 @@
 # Farm Time — Changelog
 
+## v1.5.5
+
+- **Arrow:** now always points to the nearest available (confirmed) node. Unavailable grey nodes are ignored, even when they are shown.
+- **New options:** "Show herbs" and "Show ores" in the settings panel (also `/ft herbs`, `/ft ores`). They hide that type everywhere: plate above the node, in-world markers, arrow and the "Press F" prompt. Session tracking is not affected.
+
 ## v1.5.4
 
 - **Fixed:** nodes were confirmed by the tooltips of other addons' minimap pins (GatherLite, GatherMate2, HandyNotes, Questie…). Those pins mark where a node used to be, not where it is now. Only the game's own minimap tracking dots confirm nodes now.

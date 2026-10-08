@@ -118,7 +118,7 @@ local function CurrentPromptTarget()
     local guid, name, kind = FT:GetInteractTarget()
     if not guid then return nil end
     if guid:find("^GameObject") then
-        if kind == "herb" or kind == "ore" then return kind, name, guid end
+        if (kind == "herb" or kind == "ore") and FT:KindVisible(kind) then return kind, name, guid end
         return nil
     end
     if guid:find("^Creature") or guid:find("^Vehicle") then

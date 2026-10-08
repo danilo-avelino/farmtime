@@ -78,8 +78,8 @@ sessão com o valor do que foi coletado (preços do Auctionator).
     angle" até o quadrado ficar no chão onde você estava. Se mudar muito a
     inclinação da câmera no jogo, recalibre. Girar a câmera com o botão esquerdo
     não move os ícones (eles seguem a direção do personagem).
-  - **Seta:** uma seta (estilo TomTom) aponta para o nó confirmado mais
-    próximo (até 400 jardas), com o ícone, o nome e a distância; verde para
+  - **Seta:** uma seta (estilo TomTom) aponta sempre para o nó **disponível**
+    (confirmado) mais próximo, ignorando os cinzas (até 400 jardas), com o ícone, o nome e a distância; verde para
     erva, laranja para minério. Arraste para mudar de lugar (a posição fica
     salva). `/ft arrow` liga/desliga, `/ft arrowrange <jd>` muda o alcance.
   - **Visual:** marcadores, seta e placa sobre o nó usam o mesmo estilo de
@@ -91,6 +91,8 @@ sessão com o valor do que foi coletado (preços do Auctionator).
     entre addons (`C_ChatInfo.SendAddonMessage`), sem aparecer no chat.
   - Opções no painel (liga/desliga e alcance). `/ft hud`, `/ft nodes`,
     `/ft clearnodes [all]`.
+- **Mostrar ervas / Mostrar minérios:** caixas no painel (`/ft herbs`, `/ft ores`)
+  que escondem aquele tipo na placa, nos marcadores, na seta e no aviso "aperte F".
 - **Comandos:** `/ft` abre o painel; `/ft help` lista os demais.
 
 ## Estrutura

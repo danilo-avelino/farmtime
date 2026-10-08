@@ -28,6 +28,8 @@ FT.defaults = {
     language      = "enUS", -- "enUS" ou "ptBR"
     nodes         = {},    -- [instanceID] = { {x=, y=, z=, name=, kind=, gatheredAt=, confirmedAt=}, ... }
     hudEnabled    = true,  -- marcadores 3D dos nós salvos
+    showHerbs     = true,  -- mostrar ervas (placa, marcadores, seta, aviso F)
+    showOres      = true,  -- mostrar minérios
     hudShowUnconfirmed = false, -- também mostrar (em cinza) nós ainda não confirmados
     arrowEnabled  = true,  -- seta para o nó confirmado mais próximo
     arrowRange    = 400,   -- jardas: alcance da seta
@@ -123,6 +125,15 @@ end)
 ---------------------------------------------------------------------------
 local commands = {}
 
+-- Ervas/minérios podem ser escondidos separadamente (painel: Show herbs / Show ores).
+function FT:KindVisible(kind)
+    local db = self.db
+    if not db then return true end
+    if kind == "herb" then return db.showHerbs ~= false end
+    if kind == "ore" then return db.showOres ~= false end
+    return true
+end
+
 -- Muda uma opção e aplica o efeito. Usado pelos comandos e pelo painel.
 function FT:SetOption(key, value)
     self.db[key] = value
@@ -176,6 +187,8 @@ commands.loot   = Toggle("fastLoot", "OPT_FASTLOOT")
 commands.mats   = Toggle("trackTradeGoods", "OPT_MATS")
 commands.session = function() FT:ToggleSessionWindow() end
 commands.hud    = Toggle("hudEnabled", "OPT_HUD")
+commands.herbs  = Toggle("showHerbs", "OPT_HERBS")
+commands.ores   = Toggle("showOres", "OPT_ORES")
 commands.grey   = Toggle("hudShowUnconfirmed", "OPT_GREY")
 commands.arrow  = Toggle("arrowEnabled", "OPT_ARROW")
 commands.shareguild = Toggle("shareGuild", "OPT_SHARE_GUILD")

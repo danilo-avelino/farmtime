@@ -211,6 +211,7 @@ function FT:RefreshHighlight()
     local isObject = guid and guid:find("^GameObject")
     -- Sem nome não dá para classificar; nesse caso mostra mesmo assim.
     local show = db.enabled and isObject and not (db.onlyGathering and name and kind == "other")
+        and self:KindVisible(kind)
 
     -- O nó salvo com esse nome, aqui perto, está confirmado (o jogo o vê).
     self.currentTargetName = isObject and (kind == "herb" or kind == "ore") and name or nil

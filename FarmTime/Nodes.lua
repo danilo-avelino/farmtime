@@ -442,7 +442,9 @@ local function UpdateArrow(list, x, y, facing)
         for _, n in ipairs(list) do
             local d2 = Distance2(n, x, y)
             local isTarget = target and n.name == target and d2 < MERGE_DISTANCE * MERGE_DISTANCE
-            if d2 <= maxD2 and not isTarget and (IsConfirmed(n) or db.hudShowUnconfirmed)
+            -- A seta só aponta para nós DISPONÍVEIS (confirmados), mesmo com a
+            -- opção de mostrar os indisponíveis ligada.
+            if d2 <= maxD2 and not isTarget and IsConfirmed(n) and FT:KindVisible(n.kind)
                 and (not bestD2 or d2 < bestD2) then
                 best, bestD2 = n, d2
             end
@@ -484,7 +486,8 @@ local function UpdateMarkers()
             -- O nó que já é alvo de interação ganha a placa grande; não duplica.
             local isTarget = target and n.name == target and d2 < MERGE_DISTANCE * MERGE_DISTANCE
             local confirmed = IsConfirmed(n)
-            if d2 <= range2 and not isTarget and (confirmed or db.hudShowUnconfirmed) then
+            if d2 <= range2 and not isTarget and (confirmed or db.hudShowUnconfirmed)
+                and FT:KindVisible(n.kind) then
                 local sx, sy, depth = Project(n.x - x, n.y - y, (n.z and z) and (n.z - z) or 0, facing, W, H)
                 if sx then
                     used = used + 1

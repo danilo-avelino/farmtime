@@ -10,7 +10,7 @@ local ICON = "Interface\\Icons\\INV_Misc_Flower_02"
 -- Painel
 ---------------------------------------------------------------------------
 local panel = CreateFrame("Frame", "FarmTimeConfig", UIParent, "BasicFrameTemplateWithInset")
-panel:SetSize(650, 566)
+panel:SetSize(650, 622)
 panel:SetPoint("CENTER")
 panel:SetFrameStrata("DIALOG")
 panel:SetMovable(true)
@@ -88,6 +88,8 @@ local function AddSlider(key, labelKey, lo, hi, step)
 end
 
 AddCheckbox("enabled",         "CFG_ENABLED")
+AddCheckbox("showHerbs",       "CFG_HERBS")
+AddCheckbox("showOres",        "CFG_ORES")
 AddCheckbox("onlyGathering",   "CFG_ONLY")
 AddCheckbox("anchorToNode",    "CFG_ANCHOR")
 AddCheckbox("hideGameName",    "CFG_HIDENAME")
