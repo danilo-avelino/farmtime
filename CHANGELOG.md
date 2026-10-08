@@ -1,5 +1,9 @@
 # Farm Time — Changelog
 
+## v1.5.3
+
+- **Option renamed:** "Show unavailable herbs/ores (grey)". It controls whether nodes that are not confirmed, or were already gathered, are shown in grey or hidden (default: hidden). Also available as `/ft grey`.
+
 ## v1.5.2
 
 - **Fixed:** a node you just gathered could be re-confirmed while its loot window was still open, so it kept showing. Proximity can no longer re-confirm a node for 2 minutes after you gather it (minimap: 15 seconds).
