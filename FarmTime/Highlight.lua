@@ -64,7 +64,6 @@ local COLORS = {
     other = { 0.6, 0.8, 1.0 },
 }
 
-local LABELS = { herb = "Erva", ore = "Minério", other = "Objeto" }
 
 -- Moldura feita de 4 texturas finas (funciona igual em todos os clientes,
 -- sem depender de BackdropTemplate).
@@ -233,9 +232,10 @@ local function ShowAlert(kind, name, unit)
         alert.icon:SetTexture(FALLBACK_ICONS[kind])
     end
 
-    alert.text:SetText(name or LABELS[kind])
+    local label = FT.L["KIND_" .. kind]
+    alert.text:SetText(name or label)
     alert.text:SetTextColor(c[1], c[2], c[3])
-    alert.sub:SetText(LABELS[kind])
+    alert.sub:SetText(label)
     alert.border:SetColor(c[1] * 0.8, c[2] * 0.8, c[3] * 0.8, 1)
     alert.bar:SetColorTexture(c[1], c[2], c[3], 0.9)
 
@@ -306,7 +306,7 @@ FT:RegisterEvent("PLAYER_SOFT_INTERACT_CHANGED", function(self, oldGUID, newGUID
     eventGUID = (not IsSecret(newGUID)) and newGUID or nil
     if self.db and self.db.debug then
         local guid, name, kind = self:GetInteractTarget()
-        self:Print(string.format("alvo: %s | %s | %s | existe=%s | placa=%s",
+        self:Print(string.format(self.L.DEBUG_TARGET,
             tostring(name), tostring(kind), tostring(guid),
             tostring(Safe(UnitExists, UNIT)), tostring(GetInteractPlate() ~= nil)))
     end

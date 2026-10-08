@@ -10,7 +10,7 @@ local ICON = "Interface\\Icons\\INV_Misc_Flower_02"
 -- Painel
 ---------------------------------------------------------------------------
 local panel = CreateFrame("Frame", "FarmTimeConfig", UIParent, "BasicFrameTemplateWithInset")
-panel:SetSize(340, 520)
+panel:SetSize(340, 600)
 panel:SetPoint("CENTER")
 panel:SetFrameStrata("DIALOG")
 panel:SetMovable(true)
@@ -29,11 +29,12 @@ title:SetText("Farm Time")
 local controls = {}
 local y = -36
 
-local function AddCheckbox(key, label)
+-- labelKey é uma chave de FT.L (o texto troca junto com o idioma).
+local function AddCheckbox(key, labelKey)
     local cb = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
     cb:SetPoint("TOPLEFT", 16, y)
     cb.Text:SetFontObject("GameFontHighlight")
-    cb.Text:SetText(label)
+    FT:T(cb.Text, labelKey)
     cb:SetScript("OnClick", function(self)
         FT:SetOption(key, self:GetChecked() and true or false)
     end)
@@ -44,7 +45,7 @@ local function AddCheckbox(key, label)
 end
 
 -- Slider simples, sem template (os templates de slider mudam entre clientes).
-local function AddSlider(key, label, lo, hi, step)
+local function AddSlider(key, labelKey, lo, hi, step)
     local text = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     text:SetPoint("TOPLEFT", 22, y - 6)
 
@@ -66,7 +67,7 @@ local function AddSlider(key, label, lo, hi, step)
     s:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
 
     local function UpdateText(v)
-        text:SetFormattedText("%s: |cffffffff%d|r", label, v)
+        text:SetFormattedText("%s: |cffffffff%d|r", FT.L[labelKey], v)
     end
 
     s:SetScript("OnValueChanged", function(self, v, userInput)
@@ -85,47 +86,68 @@ local function AddSlider(key, label, lo, hi, step)
     return s
 end
 
-AddCheckbox("enabled",       "Ativar destaque")
-AddCheckbox("onlyGathering", "Só ervas e minérios")
-AddCheckbox("anchorToNode",  "Ícone em cima do nó (senão, no centro da tela)")
-AddCheckbox("hideGameName",  "Esconder o nome do jogo sobre o nó")
-AddCheckbox("sound",         "Som ao encontrar um nó")
-AddCheckbox("bindInteractKey", "Tecla F coleta a erva/minério")
-AddCheckbox("fastLoot",      "Fast loot (Shift segurado desativa)")
-AddCheckbox("sessionWindow", "Janela da sessão abre ao coletar")
-AddCheckbox("manageCVars",   "Ligar ícones de interação do jogo")
-AddCheckbox("debug",         "Debug no chat")
+AddCheckbox("enabled",         "CFG_ENABLED")
+AddCheckbox("onlyGathering",   "CFG_ONLY")
+AddCheckbox("anchorToNode",    "CFG_ANCHOR")
+AddCheckbox("hideGameName",    "CFG_HIDENAME")
+AddCheckbox("sound",           "CFG_SOUND")
+AddCheckbox("bindInteractKey", "CFG_KEY")
+AddCheckbox("fastLoot",        "CFG_FASTLOOT")
+AddCheckbox("sessionWindow",   "CFG_SESSION")
+AddCheckbox("trackTradeGoods", "CFG_MATS")
+AddCheckbox("manageCVars",     "CFG_CVARS")
+AddCheckbox("debug",           "CFG_DEBUG")
 y = y - 6
-AddSlider("iconSize",      "Tamanho do ícone", 16, 96, 2)
-AddSlider("interactRange", "Alcance (jardas)", 5, 60, 1)
+AddSlider("iconSize",      "CFG_SIZE", 16, 96, 2)
+AddSlider("interactRange", "CFG_RANGE", 5, 60, 1)
 
 local minimapCB = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
 minimapCB:SetPoint("TOPLEFT", 16, y)
 minimapCB.Text:SetFontObject("GameFontHighlight")
-minimapCB.Text:SetText("Mostrar botão no minimapa")
+FT:T(minimapCB.Text, "CFG_MINIMAP")
 minimapCB:SetScript("OnClick", function(self)
     FT.db.minimap.hide = not self:GetChecked()
     FT:UpdateMinimapButton()
 end)
 minimapCB.Refresh = function(self) self:SetChecked(not FT.db.minimap.hide) end
 table.insert(controls, minimapCB)
+y = y - 34
+
+-- Idioma: um botão por idioma, funciona como seleção única.
+local langLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+langLabel:SetPoint("TOPLEFT", 22, y)
+FT:T(langLabel, "CFG_LANGUAGE")
+y = y - 18
+local langX = 16
+for _, lang in ipairs(FT.LANGUAGES) do
+    local rb = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
+    rb:SetPoint("TOPLEFT", langX, y)
+    rb.Text:SetFontObject("GameFontHighlight")
+    rb.Text:SetText(lang.label) -- nome do idioma sempre no próprio idioma
+    rb:SetScript("OnClick", function()
+        FT:SetOption("language", lang.code)
+    end)
+    rb.Refresh = function(self) self:SetChecked(FT.db.language == lang.code) end
+    table.insert(controls, rb)
+    langX = langX + 140
+end
 
 local statusBtn = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
 statusBtn:SetSize(96, 22)
 statusBtn:SetPoint("BOTTOMLEFT", 16, 14)
-statusBtn:SetText("Diagnóstico")
+FT:T(statusBtn, "BTN_STATUS")
 statusBtn:SetScript("OnClick", function() SlashCmdList.FARMTIME("status") end)
 
 local testBtn = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
 testBtn:SetSize(96, 22)
 testBtn:SetPoint("BOTTOMRIGHT", -16, 14)
-testBtn:SetText("Testar alerta")
+FT:T(testBtn, "BTN_TEST")
 testBtn:SetScript("OnClick", function() FT:ShowTestAlert() end)
 
 local sessionBtn = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
 sessionBtn:SetSize(96, 22)
 sessionBtn:SetPoint("BOTTOM", 0, 14)
-sessionBtn:SetText("Sessão")
+FT:T(sessionBtn, "BTN_SESSION")
 sessionBtn:SetScript("OnClick", function() FT:ToggleSessionWindow() end)
 
 function FT:RefreshConfig()
@@ -192,7 +214,7 @@ end)
 button:SetScript("OnClick", function(_, mouse)
     if mouse == "RightButton" then
         FT:SetOption("enabled", not FT.db.enabled)
-        FT:Print(FT.db.enabled and "ativado" or "desativado")
+        FT:Print(FT.db.enabled and FT.L.ENABLED or FT.L.DISABLED)
     else
         FT:ToggleConfig()
     end
@@ -201,10 +223,10 @@ end)
 button:SetScript("OnEnter", function(self)
     GameTooltip:SetOwner(self, "ANCHOR_LEFT")
     GameTooltip:AddLine("Farm Time")
-    GameTooltip:AddLine(FT.db.enabled and "|cff33ff33Ativado|r" or "|cffff3333Desativado|r")
-    GameTooltip:AddLine("Clique: configurações", 1, 1, 1)
-    GameTooltip:AddLine("Clique direito: liga/desliga", 1, 1, 1)
-    GameTooltip:AddLine("Arraste: mover o botão", 1, 1, 1)
+    GameTooltip:AddLine(FT.db.enabled and ("|cff33ff33" .. FT.L.ENABLED .. "|r") or ("|cffff3333" .. FT.L.DISABLED .. "|r"))
+    GameTooltip:AddLine(FT.L.TT_CLICK, 1, 1, 1)
+    GameTooltip:AddLine(FT.L.TT_RIGHTCLICK, 1, 1, 1)
+    GameTooltip:AddLine(FT.L.TT_DRAG, 1, 1, 1)
     GameTooltip:Show()
 end)
 button:SetScript("OnLeave", function() GameTooltip:Hide() end)

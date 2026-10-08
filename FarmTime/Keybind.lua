@@ -39,19 +39,18 @@ function FT:ApplyKeybind()
     if SetBinding(key, ACTION) then
         SaveCurrentBindings()
         if current and current ~= "" then
-            self:Print(string.format("tecla %s agora coleta (antes: %s). Desfaça no painel.",
-                key, _G["BINDING_NAME_" .. current] or current))
+            self:Print(string.format(self.L.KEY_BOUND_PREV, key, _G["BINDING_NAME_" .. current] or current))
         else
-            self:Print("tecla " .. key .. " agora coleta a erva/minério destacado.")
+            self:Print(string.format(self.L.KEY_BOUND, key))
         end
     else
-        self:Print("não foi possível ligar a tecla " .. key)
+        self:Print(string.format(self.L.KEY_FAIL, key))
     end
 end
 
 function FT:RestoreKeybind()
     if InCombatLockdown() then
-        self:Print("não dá para trocar teclas em combate; tente de novo depois.")
+        self:Print(self.L.KEY_COMBAT)
         return
     end
     local saved = self.db.savedBinding
@@ -64,7 +63,7 @@ function FT:RestoreKeybind()
         end
         SaveCurrentBindings()
     end
-    self:Print("tecla " .. saved.key .. " devolvida ao que era antes.")
+    self:Print(string.format(self.L.KEY_RESTORED, saved.key))
     saved.key, saved.action = nil, nil
 end
 

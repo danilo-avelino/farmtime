@@ -33,7 +33,12 @@ sessão com o valor do que foi coletado (preços do Auctionator).
   não estão na tabela, o ícone é aprendido no primeiro saque.
 - **Fast loot:** pega todo o saque assim que a janela abre. Segurar Shift (a
   tecla de "inverter auto loot") desativa naquele saque. Opção no painel ou `/ft loot`.
-- **Janela da sessão:** lista ervas, minérios, skinning e peixes coletados, com
+- **Idioma:** inglês por padrão; português (BR) pode ser escolhido no painel
+  (seção "Language") ou com `/ft lang` (`/ft lang en` / `/ft lang pt`). Troca na hora.
+- **Janela da sessão:** lista ervas, minérios, skinning e peixes coletados e
+  também **materiais de profissão saqueados de qualquer lugar** (carne, pano,
+  couro, metal, elementais — itens da categoria "Trade Goods"; itens de missão
+  ficam de fora; opção no painel ou `/ft mats`), com
   quantidade e valor pelo **último preço visto no Auctionator** (sem Auctionator
   aparece "—"). Mostra o total, um timer desde a primeira coleta da sessão e um
   botão **Reset**. É móvel (arraste) e lembra a posição. A sessão fica só na
@@ -47,10 +52,11 @@ sessão com o valor do que foi coletado (preços do Auctionator).
 |---|---|
 | `FarmTime.toc` | Metadados, SavedVariables (`FarmTimeDB`) e ordem de carregamento |
 | `Core.lua` | Configurações padrão, despacho de eventos, comandos `/ft` |
+| `Locale.lua` | Textos em inglês (padrão) e português (BR) e troca de idioma |
 | `Detection.lua` | Decide se o objeto é erva, minério ou outra coisa (listas do Classic + nomes aprendidos ao coletar) |
 | `Highlight.lua` | Liga as opções de alvo de interação do jogo e mostra o alerta |
 | `Keybind.lua` | Liga a tecla F ao "Interagir com o alvo" e guarda o atalho anterior |
-| `Loot.lua` | Fast loot e registro do que foi saqueado de coletas |
+| `Loot.lua` | Fast loot e registro do que foi saqueado de coletas e dos materiais de profissão |
 | `Session.lua` | Janela da sessão: itens, valores do Auctionator, total, timer e reset |
 | `Config.lua` | Painel de configurações e botão do minimapa (sem bibliotecas externas) |
 

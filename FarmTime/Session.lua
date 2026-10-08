@@ -1,7 +1,8 @@
 -- Farm Time - Sessão de coleta
 --
 -- Janela móvel que lista tudo o que foi coletado (erva, minério, skinning,
--- pesca) e quanto vale pelo último preço visto no Auctionator.
+-- pesca e, opcionalmente, materiais de profissão saqueados de qualquer lugar)
+-- e quanto vale pelo último preço visto no Auctionator.
 -- A sessão fica só na memória: reseta ao relogar (ou /reload) e a janela some
 -- até a próxima coleta. Só a posição da janela é salva.
 
@@ -100,12 +101,12 @@ close:SetPoint("TOPRIGHT", 2, 2)
 local reset = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
 reset:SetSize(54, 18)
 reset:SetPoint("RIGHT", close, "LEFT", 0, 0)
-reset:SetText("Reset")
+FT:T(reset, "SESSION_RESET")
 reset:SetScript("OnClick", function() FT:ResetSession() end)
 reset:SetScript("OnEnter", function(self)
     GameTooltip:SetOwner(self, "ANCHOR_TOP")
-    GameTooltip:AddLine("Zerar a sessão")
-    GameTooltip:AddLine("Apaga a lista e o timer.", 1, 1, 1)
+    GameTooltip:AddLine(FT.L.SESSION_RESET_TT)
+    GameTooltip:AddLine(FT.L.SESSION_RESET_TT2, 1, 1, 1)
     GameTooltip:Show()
 end)
 reset:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -118,18 +119,18 @@ divider:SetHeight(1)
 
 local empty = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
 empty:SetPoint("TOPLEFT", 10, -34)
-empty:SetText("Nada coletado ainda.")
+FT:T(empty, "SESSION_EMPTY")
 
 local totalLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 totalLabel:SetPoint("BOTTOMLEFT", 8, 8)
-totalLabel:SetText("Total")
+FT:T(totalLabel, "SESSION_TOTAL")
 
 local totalValue = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
 totalValue:SetPoint("BOTTOMRIGHT", -8, 8)
 
 local note = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
 note:SetPoint("BOTTOMLEFT", totalLabel, "TOPLEFT", 0, 4)
-note:SetText("Auctionator não encontrado: sem preços.")
+FT:T(note, "SESSION_NO_AH")
 
 local rows = {}
 local function GetRow(i)

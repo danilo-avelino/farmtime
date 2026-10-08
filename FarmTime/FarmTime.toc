@@ -1,13 +1,15 @@
 ## Interface: 16001, 11509
 ## OptionalDeps: Auctionator
 ## Title: Farm Time
-## Notes: Destaca a erva/minério à frente, coleta com F, fast loot e janela da sessão com preços do Auctionator.
+## Notes: Highlights the herb/ore in front of you, F to gather, fast loot and a session window with Auctionator prices.
+## Notes-ptBR: Destaca a erva/minério à frente, coleta com F, fast loot e janela da sessão com preços do Auctionator.
 ## Author: Danilo Avelino
-## Version: 0.9.0
+## Version: 1.0.0
 ## SavedVariables: FarmTimeDB
 ## IconTexture: Interface\Icons\INV_Misc_Flower_02
 
 Core.lua
+Locale.lua
 Detection.lua
 Highlight.lua
 Keybind.lua

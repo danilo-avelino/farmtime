@@ -24,6 +24,8 @@ FT.defaults = {
     nodeIcons     = {},    -- [nome do nó] = ícone do item coletado (aprendido)
     fastLoot      = true,  -- pega todo o saque na hora (Shift segurado desativa)
     sessionWindow = true,  -- janela da sessão abre sozinha ao coletar
+    trackTradeGoods = true, -- sessão também conta materiais (carne, pano, couro...)
+    language      = "enUS", -- "enUS" ou "ptBR"
 }
 
 local function CopyDefaults(src, dst)
@@ -75,7 +77,7 @@ frame:SetScript("OnEvent", function(_, event, ...)
     if not list then return end
     for _, fn in ipairs(list) do
         local ok, err = pcall(fn, FT, ...)
-        if not ok then FT:Print("erro em " .. event .. ": " .. tostring(err)) end
+        if not ok then FT:Print(string.format(FT.L.EVENT_ERROR, event, tostring(err))) end
     end
 end)
 
@@ -95,9 +97,10 @@ end)
 
 FT:RegisterEvent("PLAYER_LOGIN", function(self)
     if self.db.manageCVars then self:ApplyCVars() end
-    self:Print("carregado. Clique no ícone do minimapa ou digite /ft help.")
+    self:ApplyLanguage()
+    self:Print(self.L.LOADED)
     if self.missingEvents then
-        self:Print("eventos que não existem neste cliente: " .. table.concat(self.missingEvents, ", "))
+        self:Print(string.format(self.L.MISSING_EVENTS, table.concat(self.missingEvents, ", ")))
     end
 end)
 
@@ -115,50 +118,63 @@ function FT:SetOption(key, value)
         if value then self:ApplyCVars() else self:RestoreCVars() end
     elseif key == "bindInteractKey" then
         if value then self:ApplyKeybind() else self:RestoreKeybind() end
+    elseif key == "language" then
+        self:ApplyLanguage()
     end
     self:RefreshHighlight()
     if self.RefreshConfig then self:RefreshConfig() end
 end
 
-local function Toggle(key, label)
+-- labelKey é uma chave de FT.L, lida na hora (o idioma pode mudar).
+local function Toggle(key, labelKey)
     return function()
         FT:SetOption(key, not FT.db[key])
-        FT:Print(label, FT.db[key] and "ligado" or "desligado")
+        local label = string.format(FT.L[labelKey], FT.db.interactKey)
+        FT:Print(label, FT.db[key] and FT.L.ON or FT.L.OFF)
     end
 end
 
-local function Number(key, label, lo, hi)
+local function Number(key, labelKey, lo, hi)
     return function(arg)
         local v = tonumber(arg)
         if v and v >= lo and v <= hi then
             FT:SetOption(key, v)
-            FT:Print(label, "=", v)
+            FT:Print(FT.L[labelKey], "=", v)
         else
-            FT:Print(string.format("uso: %d-%d (atual: %s)", lo, hi, tostring(FT.db[key])))
+            FT:Print(string.format(FT.L.USAGE_RANGE, lo, hi, tostring(FT.db[key])))
         end
     end
 end
 
 commands[""]    = function() FT:ToggleConfig() end
 commands.config = commands[""]
-commands.toggle = Toggle("enabled", "destaque")
-commands.size   = Number("iconSize", "tamanho do ícone", 16, 96)
-commands.range  = Number("interactRange", "alcance (o jogo pode limitar)", 5, 60)
+commands.toggle = Toggle("enabled", "OPT_HIGHLIGHT")
+commands.size   = Number("iconSize", "OPT_ICON_SIZE", 16, 96)
+commands.range  = Number("interactRange", "OPT_RANGE", 5, 60)
 commands.all    = function()
     FT:SetOption("onlyGathering", not FT.db.onlyGathering)
-    FT:Print(FT.db.onlyGathering and "destacando só ervas e minérios"
-        or "destacando qualquer objeto interagível")
+    FT:Print(FT.db.onlyGathering and FT.L.ONLY_GATHER_ON or FT.L.ONLY_GATHER_OFF)
 end
-commands.key    = Toggle("bindInteractKey", "tecla " .. FT.defaults.interactKey .. " para coletar")
-commands.sound  = Toggle("sound", "som")
-commands.loot   = Toggle("fastLoot", "fast loot")
+commands.key    = Toggle("bindInteractKey", "OPT_KEY")
+commands.sound  = Toggle("sound", "OPT_SOUND")
+commands.loot   = Toggle("fastLoot", "OPT_FASTLOOT")
+commands.mats   = Toggle("trackTradeGoods", "OPT_MATS")
 commands.session = function() FT:ToggleSessionWindow() end
-commands.reset  = function() FT:ResetSession(); FT:Print("sessão zerada") end
-commands.debug  = Toggle("debug", "debug")
+commands.reset  = function() FT:ResetSession(); FT:Print(FT.L.SESSION_CLEARED) end
+commands.debug  = Toggle("debug", "OPT_DEBUG")
 commands.minimap = function()
     FT.db.minimap.hide = not FT.db.minimap.hide
     FT:UpdateMinimapButton()
-    FT:Print("botão do minimapa", FT.db.minimap.hide and "escondido" or "visível")
+    FT:Print(FT.db.minimap.hide and FT.L.MINIMAP_HIDDEN or FT.L.MINIMAP_SHOWN)
+end
+-- /ft lang [en|pt]: sem argumento, alterna entre os idiomas.
+commands.lang   = function(arg)
+    local code
+    if arg:find("^en") then code = "enUS"
+    elseif arg:find("^pt") then code = "ptBR"
+    else code = (FT.db.language == "enUS") and "ptBR" or "enUS" end
+    FT:SetOption("language", code)
+    FT:Print(FT.L.LANGUAGE_SET)
 end
 
 -- Diagnóstico: versão do cliente, opções do jogo e alvo de interação atual.
@@ -166,55 +182,41 @@ end
 commands.status = function()
     local ok, err = pcall(function()
         local version, build, _, toc = GetBuildInfo()
-        FT:Print("cliente", tostring(version), tostring(build), "interface", tostring(toc))
+        FT:Print(FT.L.STATUS_CLIENT, tostring(version), tostring(build), "interface", tostring(toc))
     end)
-    if not ok then FT:Print("versão: erro", tostring(err)) end
+    if not ok then FT:Print(FT.L.STATUS_CLIENT .. ": " .. FT.L.STATUS_ERROR, tostring(err)) end
 
     local getter = (C_CVar and C_CVar.GetCVar) or GetCVar
     for _, cvar in ipairs({ "SoftTargetInteract", "SoftTargetIconInteract",
         "SoftTargetIconGameObject", "SoftTargetLowPriorityIcons", "SoftTargetInteractRange" }) do
         local okc, v = pcall(getter, cvar)
-        print("  " .. cvar .. " = " .. (okc and v ~= nil and tostring(v) or "(não existe)"))
+        print("  " .. cvar .. " = " .. (okc and v ~= nil and tostring(v) or FT.L.CVAR_MISSING))
     end
 
     local okt, guid, name, kind = pcall(FT.GetInteractTarget, FT)
     if okt then
-        print("  alvo de interação: " .. tostring(name) .. " / " .. tostring(kind) .. " / " .. tostring(guid))
+        print("  " .. FT.L.STATUS_TARGET .. ": " .. tostring(name) .. " / " .. tostring(kind) .. " / " .. tostring(guid))
     else
-        print("  alvo de interação: erro " .. tostring(guid))
+        print("  " .. FT.L.STATUS_TARGET .. ": " .. FT.L.STATUS_ERROR .. " " .. tostring(guid))
     end
     if FT.missingEvents then
-        print("  eventos ausentes: " .. table.concat(FT.missingEvents, ", "))
+        print("  " .. FT.L.STATUS_MISSING .. ": " .. table.concat(FT.missingEvents, ", "))
     end
 end
 
 commands.restore = function()
     FT:SetOption("manageCVars", false)
-    FT:Print("opções do jogo restauradas. Use /ft apply para religar.")
+    FT:Print(FT.L.CVARS_RESTORED)
 end
 
 commands.apply = function()
     FT:SetOption("manageCVars", true)
-    FT:Print("opções do jogo aplicadas.")
+    FT:Print(FT.L.CVARS_APPLIED)
 end
 
 commands.help = function()
-    FT:Print("comandos:")
-    print("  /ft               - abre/fecha o painel de configurações")
-    print("  /ft toggle        - liga/desliga o destaque")
-    print("  /ft minimap       - mostra/esconde o botão do minimapa")
-    print("  /ft size <px>     - tamanho do ícone na placa")
-    print("  /ft range <jd>    - alcance do soft target de interação")
-    print("  /ft all           - alterna: só ervas/minérios ou qualquer objeto")
-    print("  /ft key           - liga/desliga a tecla F para coletar")
-    print("  /ft sound         - liga/desliga o som")
-    print("  /ft loot          - liga/desliga o fast loot")
-    print("  /ft session       - mostra/esconde a janela da sessão")
-    print("  /ft reset         - zera a sessão")
-    print("  /ft status        - mostra versão do cliente e opções do jogo")
-    print("  /ft debug         - imprime cada mudança de alvo de interação")
-    print("  /ft restore       - devolve as opções de soft target originais")
-    print("  /ft apply         - reaplica as opções de soft target do Farm Time")
+    FT:Print(FT.L.HELP_TITLE)
+    for _, line in ipairs(FT.L.HELP) do print("  " .. line) end
 end
 
 SLASH_FARMTIME1 = "/farmtime"
@@ -223,5 +225,5 @@ SlashCmdList.FARMTIME = function(msg)
     local cmd, arg = (msg or ""):lower():match("^%s*(%S*)%s*(.-)%s*$")
     local fn = commands[cmd] or commands.help
     local ok, err = pcall(fn, arg)
-    if not ok then FT:Print("erro no comando '" .. cmd .. "': " .. tostring(err)) end
+    if not ok then FT:Print(string.format(FT.L.CMD_ERROR, cmd, tostring(err))) end
 end
