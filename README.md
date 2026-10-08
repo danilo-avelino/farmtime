@@ -36,7 +36,9 @@ sessão com o valor do que foi coletado (preços do Auctionator).
   esfolado, aparece abaixo do centro da tela `[F] Gather Kingsblood` /
   `[F] Mine Copper Vein` / `[F] Skin Plainstrider`. A tecla mostrada é a que
   está ligada a "Interagir com o alvo". O corpo esfolável é reconhecido pelo
-  texto "Skinnable" do tooltip. Opção no painel ou `/ft prompt`.
+  texto "Skinnable" do tooltip. Só aparece quando você está **no alcance** de
+  coletar/esfolar (alcance do feitiço da profissão sobre o alvo, conferido
+  enquanto você se aproxima). Opção no painel ou `/ft prompt`.
 - **Ícone:** mostra o ícone do item do recurso (ex.: Kingsblood). Para nós que
   não estão na tabela, o ícone é aprendido no primeiro saque.
 - **Fast loot:** pega todo o saque assim que a janela abre. Segurar Shift (a

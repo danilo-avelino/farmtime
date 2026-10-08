@@ -113,31 +113,77 @@ local function InteractKey()
     return key or (FT.db and FT.db.interactKey) or "F"
 end
 
--- Retorna tipo ("herb", "ore", "skin") e nome do alvo de interação, ou nil.
+-- Retorna tipo ("herb", "ore", "skin"), nome e GUID do alvo de interação, ou nil.
 local function CurrentPromptTarget()
     local guid, name, kind = FT:GetInteractTarget()
     if not guid then return nil end
     if guid:find("^GameObject") then
-        if kind == "herb" or kind == "ore" then return kind, name end
+        if kind == "herb" or kind == "ore" then return kind, name, guid end
         return nil
     end
     if guid:find("^Creature") or guid:find("^Vehicle") then
         local ok, dead = pcall(UnitIsDead, UNIT)
-        if ok and dead == true and IsSkinnable() then return "skin", name end
+        if ok and dead == true and IsSkinnable() then return "skin", name, guid end
     end
 end
 
+---------------------------------------------------------------------------
+-- Alcance: o alvo de interação vale de longe (alcance do soft target), mas
+-- coletar/esfolar só funciona de perto. Usa o alcance do próprio feitiço da
+-- profissão sobre o alvo. true/false = sabe; nil = o jogo não informou.
+---------------------------------------------------------------------------
+local RANGE_SPELLS = { herb = 2366, ore = 2575, skin = 8613 }
+
+local GetSpellName = (C_Spell and C_Spell.GetSpellName) or function(id)
+    return (GetSpellInfo(id))
+end
+
+local function Known(v)
+    return v ~= nil and not (issecretvalue and issecretvalue(v))
+end
+
+local function InRange(kind)
+    local spellID = RANGE_SPELLS[kind]
+    if C_Spell and C_Spell.IsSpellInRange then
+        local ok, r = pcall(C_Spell.IsSpellInRange, spellID, UNIT)
+        if ok and Known(r) then return r == true end
+    elseif IsSpellInRange then
+        local name = GetSpellName(spellID)
+        local ok, r = name and pcall(IsSpellInRange, name, UNIT)
+        if ok and Known(r) then return r == 1 or r == true end
+    end
+    -- Corpo: se nem a distância de duelo (~10 jardas) alcança, está longe.
+    if kind == "skin" and CheckInteractDistance then
+        local ok, near = pcall(CheckInteractDistance, UNIT, 3)
+        if ok and Known(near) and not near then return false end
+    end
+    return nil
+end
+
+local candidate -- { kind, name, guid } do alvo atual (mesmo fora de alcance)
 local lastKey
 
-function FT:UpdatePrompt()
-    local db = self.db
-    local kind, name
-    if db and db.showPrompt then kind, name = CurrentPromptTarget() end
-    if not kind then
+local function RefreshVisibility()
+    local db = FT.db
+    if not (candidate and db and db.showPrompt) or InRange(candidate.kind) == false then
         prompt:Hide()
-        lastKey = nil
         return
     end
+    local key = candidate.kind .. (candidate.guid or "")
+    if not prompt:IsShown() or key ~= lastKey then fade:Play() end
+    lastKey = key
+    prompt:Show()
+end
+
+function FT:UpdatePrompt()
+    local kind, name, guid
+    if self.db and self.db.showPrompt then kind, name, guid = CurrentPromptTarget() end
+    if not kind then
+        candidate = nil
+        RefreshVisibility()
+        return
+    end
+    candidate = { kind = kind, name = name, guid = guid }
 
     local c = COLORS[kind]
     local action = self.L["PROMPT_" .. kind]
@@ -146,12 +192,20 @@ function FT:UpdatePrompt()
     prompt.text:SetText(action .. " |cff" .. hex .. (name or "") .. "|r")
     prompt.line:SetColorTexture(c[1], c[2], c[3], 0.9)
     prompt:SetWidth(5 + 22 + 8 + prompt.text:GetStringWidth() + 12)
-
-    local key = kind .. (name or "")
-    if not prompt:IsShown() or key ~= lastKey then fade:Play() end
-    lastKey = key
-    prompt:Show()
+    RefreshVisibility()
 end
+
+-- Enquanto houver um alvo, confere o alcance com frequência (você se aproxima
+-- ou se afasta sem o alvo mudar).
+local watcher = CreateFrame("Frame")
+local elapsed = 0
+watcher:SetScript("OnUpdate", function(_, dt)
+    if not candidate then return end
+    elapsed = elapsed + dt
+    if elapsed < 0.15 then return end
+    elapsed = 0
+    RefreshVisibility()
+end)
 
 local function Update(self) self:UpdatePrompt() end
 
