@@ -1,5 +1,11 @@
 # Farm Time — Changelog
 
+## v1.5.1
+
+- **Fixed:** saved-node markers and the arrow showed the wrong distance and direction (the distance grew as you walked toward a node). The world position axes were swapped when reading the player position.
+- **Note:** nodes saved by earlier versions had wrong positions and are cleared once on update. Gather again to rebuild them.
+- **Sharing:** the message format was bumped to version 2. Nodes shared by players still on v1.5.0 are ignored.
+
 ## v1.5.0 — First public release
 
 **Game version:** WoW Forever (Classic+) beta 1.60.1 (interface 16001). Also declared for Classic Era 1.15.9 (11509).

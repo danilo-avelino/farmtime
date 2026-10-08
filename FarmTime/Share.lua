@@ -14,7 +14,7 @@
 local _, FT = ...
 
 local PREFIX  = "FarmTime"
-local VERSION = "1"
+local VERSION = "2" -- 2: eixos corrigidos; mensagens "1" (posições trocadas) são ignoradas
 local SEP     = "~"
 local RESEND_COOLDOWN = 30 -- segundos: não reenvia o mesmo aviso do mesmo nó antes disso
 

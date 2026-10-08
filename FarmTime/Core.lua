@@ -101,7 +101,10 @@ FT:RegisterEvent("ADDON_LOADED", function(self, name)
     FarmTimeDB.showBanner, FarmTimeDB.pulse = nil, nil
     -- 0.7: visual de placa; o ícone ficou menor por padrão.
     if (FarmTimeDB.schema or 0) < 7 then FarmTimeDB.iconSize = nil end
-    FarmTimeDB.schema = 7
+    -- 1.5.1: até aqui os eixos de UnitPosition estavam trocados; nós salvos
+    -- antes disso têm posições erradas e são descartados.
+    if (FarmTimeDB.schema or 0) < 8 then FarmTimeDB.nodes = nil end
+    FarmTimeDB.schema = 8
     CopyDefaults(self.defaults, FarmTimeDB)
     self.db = FarmTimeDB
 end)

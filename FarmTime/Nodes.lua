@@ -44,7 +44,8 @@ end
 -- 1º UnitPosition; se o cliente bloquear (a API nova pode bloquear), usa a
 -- posição no mapa convertida para o mundo, como fazem os addons de setas.
 local function PlayerPosition()
-    local ok, y, x, z, instanceID = pcall(UnitPosition, "player")
+    -- Ordem do retorno: norte, oeste, altura, instância (o mesmo que o .gps X, Y).
+    local ok, x, y, z, instanceID = pcall(UnitPosition, "player")
     if ok and Usable(x) and Usable(y) then
         FT.positionSource = "UnitPosition"
         return x, y, Usable(z) and z or nil, instanceID
