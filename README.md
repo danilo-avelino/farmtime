@@ -57,7 +57,10 @@ sessão com o valor do que foi coletado (preços do Auctionator).
 - **Nós salvos na visão (HUD):** toda erva/minério coletado tem a posição
   gravada. Quando você volta à área, o ícone do recurso aparece **na visão do
   personagem**, na direção e distância do nó, com a distância embaixo.
-  - **Cinza** = não confirmado. **Colorido** = confirmado: passe o mouse sobre o
+  - Por padrão **só aparecem os nós confirmados** (a erva/minério está lá
+    agora). Os não confirmados ficam escondidos; para vê-los em cinza, marque
+    "Also show unconfirmed nodes" no painel ou use `/ft grey`.
+  - Confirmar: passe o mouse sobre o
     ponto do nó no **minimapa** (rastreamento de ervas/minérios ligado) — o addon
     lê o nome no tooltip e converte a posição do cursor para posição no mundo — ou
     chegue perto até o jogo escolher o nó como alvo de interação.

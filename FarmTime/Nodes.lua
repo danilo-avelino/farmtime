@@ -333,13 +333,13 @@ local function UpdateMarkers()
             local d2 = Distance2(n, x, y)
             -- O nó que já é alvo de interação ganha a placa grande; não duplica.
             local isTarget = target and n.name == target and d2 < MERGE_DISTANCE * MERGE_DISTANCE
-            if d2 <= range2 and not isTarget then
+            local confirmed = IsConfirmed(n)
+            if d2 <= range2 and not isTarget and (confirmed or db.hudShowUnconfirmed) then
                 local sx, sy, depth = Project(n.x - x, n.y - y, (n.z and z) and (n.z - z) or 0, facing, W, H)
                 if sx then
                     used = used + 1
                     local m = GetMarker(used)
                     local size = math.max(14, math.min(40, db.iconSize * 30 / depth))
-                    local confirmed = IsConfirmed(n)
                     local c = COLORS[n.kind] or COLORS.herb
 
                     m:SetSize(size, size)

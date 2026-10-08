@@ -98,6 +98,7 @@ AddCheckbox("fastLoot",        "CFG_FASTLOOT")
 AddCheckbox("sessionWindow",   "CFG_SESSION")
 AddCheckbox("trackTradeGoods", "CFG_MATS")
 AddCheckbox("hudEnabled",      "CFG_HUD")
+AddCheckbox("hudShowUnconfirmed", "CFG_GREY")
 AddCheckbox("manageCVars",     "CFG_CVARS")
 AddCheckbox("debug",           "CFG_DEBUG")
 
