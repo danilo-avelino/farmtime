@@ -216,6 +216,10 @@ commands.status = function()
     else
         print("  " .. FT.L.STATUS_TARGET .. ": " .. FT.L.STATUS_ERROR .. " " .. tostring(guid))
     end
+    if FT.PositionStatus then
+        local okp, text = pcall(FT.PositionStatus, FT)
+        print("  HUD: " .. tostring(text))
+    end
     if FT.missingEvents then
         print("  " .. FT.L.STATUS_MISSING .. ": " .. table.concat(FT.missingEvents, ", "))
     end

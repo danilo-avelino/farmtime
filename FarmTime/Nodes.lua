@@ -42,12 +42,57 @@ local GetCVar = (C_CVar and C_CVar.GetCVar) or GetCVar
 ---------------------------------------------------------------------------
 -- Posição
 ---------------------------------------------------------------------------
--- Coordenadas de mundo em jardas: x = norte, y = oeste. nil em instâncias.
+local function Usable(v)
+    return v ~= nil and not (issecretvalue and issecretvalue(v))
+end
+
+-- Coordenadas de mundo em jardas: x = norte, y = oeste; z pode ser nil.
+-- 1º UnitPosition; se o cliente bloquear (a API nova pode bloquear), usa a
+-- posição no mapa convertida para o mundo, como fazem os addons de setas.
 local function PlayerPosition()
     local ok, y, x, z, instanceID = pcall(UnitPosition, "player")
-    if not ok or not x then return nil end
-    if issecretvalue and (issecretvalue(x) or issecretvalue(y)) then return nil end
-    return x, y, z or 0, instanceID
+    if ok and Usable(x) and Usable(y) then
+        FT.positionSource = "UnitPosition"
+        return x, y, Usable(z) and z or nil, instanceID
+    end
+    if C_Map and C_Map.GetBestMapForUnit and C_Map.GetWorldPosFromMapPos then
+        local okm, mapID = pcall(C_Map.GetBestMapForUnit, "player")
+        if okm and Usable(mapID) then
+            local okp, pos = pcall(C_Map.GetPlayerMapPosition, mapID, "player")
+            if okp and pos then
+                local okw, continent, world = pcall(C_Map.GetWorldPosFromMapPos, mapID, pos)
+                if okw and world and Usable(world.x) and Usable(world.y) then
+                    FT.positionSource = "C_Map"
+                    return world.x, world.y, nil, continent
+                end
+            end
+        end
+    end
+    FT.positionSource = nil
+end
+
+-- Direção para onde o personagem olha (radianos, 0 = norte, anti-horário).
+-- Se GetPlayerFacing estiver bloqueado, estima pela direção do movimento.
+local lastX, lastY, movedHeading
+local function PlayerFacing(x, y)
+    local ok, f = pcall(GetPlayerFacing)
+    if ok and Usable(f) then
+        FT.facingSource = "GetPlayerFacing"
+        return f
+    end
+    if x then
+        if lastX then
+            local dx, dy = x - lastX, y - lastY
+            if dx * dx + dy * dy > 0.25 then
+                movedHeading = atan2(dy, dx)
+                lastX, lastY = x, y
+            end
+        else
+            lastX, lastY = x, y
+        end
+    end
+    FT.facingSource = movedHeading and "movement" or nil
+    return movedHeading
 end
 
 local function Distance2(n, x, y)
@@ -95,12 +140,25 @@ function FT:RecordNode(kind, name)
     end
     node.gatheredAt = time()
     node.confirmedAt = nil
+    self.lastRecordAt = GetTime()
 end
 
 FT:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player", function(self, unit, castGUID)
     local ctx = self.gatherContext
     if ctx and ctx.castGUID == castGUID then
         self:RecordNode(ctx.kind, ctx.name)
+    end
+end)
+
+-- Reserva: se o cast não foi reconhecido, grava ao abrir o saque de um objeto
+-- (GameObject) logo depois de o jogo ter mostrado uma erva/minério como alvo.
+FT:RegisterEvent("LOOT_OPENED", function(self)
+    if self.lastRecordAt and GetTime() - self.lastRecordAt < 5 then return end
+    local t = self.lastGatherTarget
+    if not t or GetTime() - t.time > 15 then return end
+    local ok, guid = pcall(GetLootSourceInfo, 1)
+    if ok and type(guid) == "string" and guid:find("^GameObject") then
+        self:RecordNode(t.kind, t.name)
     end
 end)
 
@@ -146,7 +204,7 @@ local function CursorWorldPosition()
     -- Direções do minimapa no mundo (x = norte, y = oeste).
     local upX, upY, rightX, rightY = 1, 0, 0, -1
     if GetCVar("rotateMinimap") == "1" then
-        local f = GetPlayerFacing() or 0
+        local f = PlayerFacing() or 0
         upX, upY = cos(f), sin(f)
         rightX, rightY = sin(f), -cos(f)
     end
@@ -238,7 +296,7 @@ local function UpdateMarkers()
     local db = FT.db
     local used = 0
     local x, y, z, inst = PlayerPosition()
-    local facing = GetPlayerFacing and GetPlayerFacing()
+    local facing = PlayerFacing(x, y)
     local list = x and facing and NodesHere(inst)
 
     if list and db.hudEnabled then
@@ -250,7 +308,7 @@ local function UpdateMarkers()
             -- O nó que já é alvo de interação ganha a placa grande; não duplica.
             local isTarget = target and n.name == target and d2 < MERGE_DISTANCE * MERGE_DISTANCE
             if d2 <= range2 and not isTarget then
-                local sx, sy, depth = Project(n.x - x, n.y - y, (n.z or z) - z, facing, W, H, db.hudFov)
+                local sx, sy, depth = Project(n.x - x, n.y - y, (n.z and z) and (n.z - z) or 0, facing, W, H, db.hudFov)
                 if sx then
                     used = used + 1
                     local m = GetMarker(used)
@@ -303,4 +361,15 @@ function FT:ClearNodes(all)
         local _, _, _, inst = PlayerPosition()
         if inst then self.db.nodes[inst] = nil end
     end
+end
+
+-- Diagnóstico para /ft status.
+function FT:PositionStatus()
+    local x, y, z, inst = PlayerPosition()
+    local facing = PlayerFacing(x, y)
+    local _, here = self:CountNodes()
+    return string.format("pos=%s (%s) facing=%s (%s) inst=%s nodes=%d",
+        x and string.format("%.1f,%.1f", x, y) or "nil", tostring(self.positionSource),
+        facing and string.format("%.2f", facing) or "nil", tostring(self.facingSource),
+        tostring(inst), here)
 end

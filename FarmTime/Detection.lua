@@ -105,6 +105,9 @@ end
 FT:RegisterUnitEvent("UNIT_SPELLCAST_SENT", "player", function(self, unit, target, castGUID, spellID)
     local spellName = spellID and GetSpellName(spellID)
     local kind = spellName and spellNameToKind[spellName]
+    if self.db.debug then
+        self:Print(string.format("cast: %s (%s) -> %s | %s", tostring(spellName), tostring(spellID), tostring(kind), tostring(target)))
+    end
     if not kind then return end
     self.gatherContext = { kind = kind, name = target, time = GetTime(), castGUID = castGUID }
     -- Só ervas e minérios entram na lista de nomes de nós (skinning é em criaturas).

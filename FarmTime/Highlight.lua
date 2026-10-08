@@ -281,6 +281,9 @@ function FT:RefreshHighlight()
     if self.currentTargetName and self.ConfirmNodeNearPlayer then
         self:ConfirmNodeNearPlayer(name)
     end
+    if self.currentTargetName then
+        self.lastGatherTarget = { kind = kind, name = name, time = GetTime() }
+    end
 
     if not show then
         HideAlert()
