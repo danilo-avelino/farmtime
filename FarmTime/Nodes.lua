@@ -318,6 +318,91 @@ function FT:StartCalibration()
     self:Print(self.L.CALIBRATE_HELP)
 end
 
+---------------------------------------------------------------------------
+-- Seta para o nó confirmado mais próximo (estilo TomTom)
+---------------------------------------------------------------------------
+local ARROW_TEXTURE = "Interface\\AddOns\\FarmTime\\Media\\Arrow"
+
+local arrow = CreateFrame("Frame", "FarmTimeArrow", UIParent)
+arrow:SetSize(56, 56)
+arrow:SetPoint("TOP", UIParent, "TOP", 0, -110)
+arrow:SetFrameStrata("MEDIUM")
+arrow:SetClampedToScreen(true)
+arrow:SetMovable(true)
+arrow:EnableMouse(true)
+arrow:RegisterForDrag("LeftButton")
+arrow:Hide()
+
+arrow.tex = arrow:CreateTexture(nil, "ARTWORK")
+arrow.tex:SetAllPoints()
+arrow.tex:SetTexture(ARROW_TEXTURE)
+
+arrow.icon = arrow:CreateTexture(nil, "ARTWORK")
+arrow.icon:SetSize(18, 18)
+arrow.icon:SetPoint("TOPRIGHT", arrow, "BOTTOM", -2, -4)
+arrow.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+
+arrow.name = arrow:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+arrow.name:SetPoint("LEFT", arrow.icon, "RIGHT", 4, 0)
+
+arrow.dist = arrow:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+arrow.dist:SetPoint("TOP", arrow.icon, "BOTTOM", 10, -3)
+
+arrow:SetScript("OnDragStart", arrow.StartMoving)
+arrow:SetScript("OnDragStop", function(self)
+    self:StopMovingOrSizing()
+    local point, _, relPoint, px, py = self:GetPoint(1)
+    FT.db.arrowPos = { point = point, relPoint = relPoint, x = px, y = py }
+end)
+
+FT:RegisterEvent("PLAYER_LOGIN", function(self)
+    local pos = self.db.arrowPos
+    if pos and pos.point then
+        arrow:ClearAllPoints()
+        arrow:SetPoint(pos.point, UIParent, pos.relPoint or pos.point, pos.x or 0, pos.y or 0)
+    end
+end)
+
+local function UpdateArrow(list, x, y, facing)
+    local db = FT.db
+    local best, bestD2
+    if list and db.arrowEnabled then
+        local maxD2 = db.arrowRange * db.arrowRange
+        local target = FT.currentTargetName
+        for _, n in ipairs(list) do
+            local d2 = Distance2(n, x, y)
+            local isTarget = target and n.name == target and d2 < MERGE_DISTANCE * MERGE_DISTANCE
+            if d2 <= maxD2 and not isTarget and (IsConfirmed(n) or db.hudShowUnconfirmed)
+                and (not bestD2 or d2 < bestD2) then
+                best, bestD2 = n, d2
+            end
+        end
+    end
+    if not best then
+        arrow:Hide()
+        return
+    end
+
+    -- Ângulo do nó em relação à frente do personagem (> 0 = à esquerda).
+    -- A seta desenhada aponta para cima; SetRotation gira no sentido anti-horário.
+    local rel = atan2(best.y - y, best.x - x) - facing
+    arrow.tex:SetRotation(rel)
+
+    local c = COLORS[best.kind] or COLORS.herb
+    local confirmed = IsConfirmed(best)
+    if confirmed then
+        arrow.tex:SetVertexColor(c[1], c[2], c[3])
+    else
+        arrow.tex:SetVertexColor(0.6, 0.6, 0.6)
+    end
+    arrow.icon:SetTexture(FT:GetNodeIcon(best.name) or "Interface\\Icons\\INV_Misc_QuestionMark")
+    arrow.icon:SetDesaturated(not confirmed)
+    arrow.name:SetText(best.name or "")
+    arrow.name:SetTextColor(c[1], c[2], c[3])
+    arrow.dist:SetFormattedText(FT.L.HUD_DISTANCE, math.floor(sqrt(bestD2) + 0.5))
+    arrow:Show()
+end
+
 local function UpdateMarkers()
     local db = FT.db
     local used = 0
@@ -384,6 +469,7 @@ local function UpdateMarkers()
         end
     end
     for i = used + 1, #markers do markers[i]:Hide() end
+    UpdateArrow(list, x, y, facing)
 end
 
 C_Timer.NewTicker(0.05, function()

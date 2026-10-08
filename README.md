@@ -73,6 +73,10 @@ sessão com o valor do que foi coletado (preços do Auctionator).
     angle" até o quadrado ficar no chão onde você estava. Se mudar muito a
     inclinação da câmera no jogo, recalibre. Girar a câmera com o botão esquerdo
     não move os ícones (eles seguem a direção do personagem).
+  - **Seta:** uma seta (estilo TomTom) aponta para o nó confirmado mais
+    próximo (até 400 jardas), com o ícone, o nome e a distância; verde para
+    erva, laranja para minério. Arraste para mudar de lugar (a posição fica
+    salva). `/ft arrow` liga/desliga, `/ft arrowrange <jd>` muda o alcance.
   - Opções no painel (liga/desliga e alcance). `/ft hud`, `/ft nodes`,
     `/ft clearnodes [all]`.
 - **Comandos:** `/ft` abre o painel; `/ft help` lista os demais.
@@ -92,6 +96,7 @@ sessão com o valor do que foi coletado (preços do Auctionator).
 | `Keybind.lua` | Liga a tecla F ao "Interagir com o alvo" e guarda o atalho anterior |
 | `Loot.lua` | Fast loot e registro do que foi saqueado de coletas e dos materiais de profissão |
 | `Session.lua` | Janela da sessão: itens, valores do Auctionator, total, timer e reset |
+| `Media/Arrow.tga` | Textura da seta (branca, tingida pela cor do recurso) |
 | `Config.lua` | Painel de configurações e botão do minimapa (sem bibliotecas externas) |
 
 ## Como funciona

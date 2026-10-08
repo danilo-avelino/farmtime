@@ -29,6 +29,8 @@ FT.defaults = {
     nodes         = {},    -- [instanceID] = { {x=, y=, z=, name=, kind=, gatheredAt=, confirmedAt=}, ... }
     hudEnabled    = true,  -- marcadores 3D dos nós salvos
     hudShowUnconfirmed = false, -- também mostrar (em cinza) nós ainda não confirmados
+    arrowEnabled  = true,  -- seta para o nó confirmado mais próximo
+    arrowRange    = 400,   -- jardas: alcance da seta
     showPrompt    = true,  -- aviso "aperte F" perto de erva/minério/corpo esfolável
     hudRange      = 150,   -- jardas: nós mais longe que isso não aparecem
     hudFov        = 90,    -- campo de visão horizontal (graus) usado na projeção
@@ -170,6 +172,8 @@ commands.mats   = Toggle("trackTradeGoods", "OPT_MATS")
 commands.session = function() FT:ToggleSessionWindow() end
 commands.hud    = Toggle("hudEnabled", "OPT_HUD")
 commands.grey   = Toggle("hudShowUnconfirmed", "OPT_GREY")
+commands.arrow  = Toggle("arrowEnabled", "OPT_ARROW")
+commands.arrowrange = Number("arrowRange", "OPT_ARROW_RANGE", 50, 2000)
 commands.prompt = Toggle("showPrompt", "OPT_PROMPT")
 commands.fov    = Number("hudFov", "OPT_FOV", 40, 150)
 commands.pitch  = Number("hudPitch", "OPT_PITCH", 0, 85)

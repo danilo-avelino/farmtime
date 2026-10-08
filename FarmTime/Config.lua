@@ -10,7 +10,7 @@ local ICON = "Interface\\Icons\\INV_Misc_Flower_02"
 -- Painel
 ---------------------------------------------------------------------------
 local panel = CreateFrame("Frame", "FarmTimeConfig", UIParent, "BasicFrameTemplateWithInset")
-panel:SetSize(650, 480)
+panel:SetSize(650, 510)
 panel:SetPoint("CENTER")
 panel:SetFrameStrata("DIALOG")
 panel:SetMovable(true)
@@ -99,6 +99,7 @@ AddCheckbox("sessionWindow",   "CFG_SESSION")
 AddCheckbox("trackTradeGoods", "CFG_MATS")
 AddCheckbox("hudEnabled",      "CFG_HUD")
 AddCheckbox("hudShowUnconfirmed", "CFG_GREY")
+AddCheckbox("arrowEnabled",    "CFG_ARROW")
 AddCheckbox("manageCVars",     "CFG_CVARS")
 AddCheckbox("debug",           "CFG_DEBUG")
 
