@@ -97,6 +97,10 @@ sessão com o valor do que foi coletado (preços do Auctionator).
   grande, ícone do item e borda/brilho na cor da raridade (cinza, branco, verde,
   azul, roxo); entra deslizando, brilha e some. Vários itens entram em fila.
   Opção no painel ou `/ft fishtoast`; prévia com `/ft fishtest`.
+- **F para pescar:** com uma vara de pescar equipada e nada para interagir, F
+  lança Pescaria; durante a pescaria e perto de qualquer coisa interagível, F volta
+  a ser "Interagir" (para recolher a boia). Troca só fora de combate. Opção no
+  painel ou `/ft fishkey`.
 - **Comandos:** `/ft` abre o painel; `/ft help` lista os demais.
 
 ## Estrutura
@@ -114,6 +118,7 @@ sessão com o valor do que foi coletado (preços do Auctionator).
 | `Style.lua` | Estilo de placa compartilhado (placa, marcadores, seta) |
 | `Share.lua` | Compartilhamento de nós com guilda e grupo (mensagens de addon) |
 | `Nodes.lua` | Guarda a posição dos nós coletados, confirma pelo minimapa e desenha os marcadores 3D |
+| `Fishing.lua` | F lança Pescaria quando há vara equipada e nada para interagir |
 | `Keybind.lua` | Liga a tecla F ao "Interagir com o alvo" e guarda o atalho anterior |
 | `Loot.lua` | Fast loot e registro do que foi saqueado de coletas e dos materiais de profissão |
 | `Session.lua` | Janela da sessão: itens, valores do Auctionator, total, timer e reset |

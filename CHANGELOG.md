@@ -1,5 +1,14 @@
 # Farm Time — Changelog
 
+## v1.7.0
+
+- **New: F to fish.**
+  - **When:** you have a fishing pole equipped and there is nothing to interact with.
+  - **What F does:** casts Fishing.
+  - **Back to Interact:** as soon as something is in reach (herb, ore, corpse, the bobber), and while you are channeling Fishing, so F can click the bobber.
+  - **How:** uses an override binding, which the game only lets addons change out of combat.
+  - **Options:** "F casts Fishing" in the panel or `/ft fishkey`.
+
 ## v1.6.0
 
 - **New: fish catch animation.** Every item you fish up shows an achievement-style toast: a large plate with the item icon, name and amount.

@@ -10,7 +10,7 @@ local ICON = "Interface\\Icons\\INV_Misc_Flower_02"
 -- Painel
 ---------------------------------------------------------------------------
 local panel = CreateFrame("Frame", "FarmTimeConfig", UIParent, "BasicFrameTemplateWithInset")
-panel:SetSize(650, 650)
+panel:SetSize(650, 678)
 panel:SetPoint("CENTER")
 panel:SetFrameStrata("DIALOG")
 panel:SetMovable(true)
@@ -95,6 +95,7 @@ AddCheckbox("anchorToNode",    "CFG_ANCHOR")
 AddCheckbox("hideGameName",    "CFG_HIDENAME")
 AddCheckbox("sound",           "CFG_SOUND")
 AddCheckbox("bindInteractKey", "CFG_KEY")
+AddCheckbox("fishingKey",      "CFG_FISHKEY")
 AddCheckbox("showPrompt",      "CFG_PROMPT")
 AddCheckbox("fastLoot",        "CFG_FASTLOOT")
 AddCheckbox("sessionWindow",   "CFG_SESSION")

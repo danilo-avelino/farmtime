@@ -31,6 +31,7 @@ FT.defaults = {
     showHerbs     = true,  -- mostrar ervas (placa, marcadores, seta, aviso F)
     showOres      = true,  -- mostrar minérios
     fishToast     = true,  -- "conquista" animada a cada peixe pescado
+    fishingKey    = true,  -- com vara equipada e nada para interagir, F lança Pescaria
     hudShowUnconfirmed = false, -- também mostrar (em cinza) nós ainda não confirmados
     arrowEnabled  = true,  -- seta para o nó confirmado mais próximo
     arrowRange    = 400,   -- jardas: alcance da seta
@@ -147,6 +148,7 @@ function FT:SetOption(key, value)
     elseif key == "language" then
         self:ApplyLanguage()
     end
+    if self.UpdateFishingKey then self:UpdateFishingKey() end
     if self.UpdatePrompt then self:UpdatePrompt() end
     self:RefreshHighlight()
     if self.RefreshConfig then self:RefreshConfig() end
@@ -190,6 +192,7 @@ commands.session = function() FT:ToggleSessionWindow() end
 commands.hud    = Toggle("hudEnabled", "OPT_HUD")
 commands.herbs  = Toggle("showHerbs", "OPT_HERBS")
 commands.fishtoast = Toggle("fishToast", "OPT_FISHTOAST")
+commands.fishkey   = Toggle("fishingKey", "OPT_FISHKEY")
 commands.fishtest  = function() FT:TestFishToast() end
 commands.ores   = Toggle("showOres", "OPT_ORES")
 commands.grey   = Toggle("hudShowUnconfirmed", "OPT_GREY")
