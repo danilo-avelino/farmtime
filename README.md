@@ -95,10 +95,14 @@ sessão com o valor do que foi coletado (preços do Auctionator).
     `/ft clearnodes [all]`.
 - **Mostrar ervas / Mostrar minérios:** caixas no painel (`/ft herbs`, `/ft ores`)
   que escondem aquele tipo na placa, nos marcadores, na seta e no aviso "aperte F".
-- **Animação ao pescar:** cada item pescado mostra uma "conquista" com placa
-  grande, ícone do item e borda/brilho na cor da raridade (cinza, branco, verde,
-  azul, roxo) e som de conquista; entra deslizando, brilha e some. Vários itens entram em fila.
+- **Animação ao pescar:** cada item pescado mostra um alerta com o visual do
+  alerta de conquista do próprio WoW (fundo, moldura do ícone, brilho e reflexo),
+  com a moldura do ícone, o brilho e o nome na cor da raridade (cinza, branco,
+  verde, azul, roxo) e o som de conquista. Vários itens entram em fila.
   Opção no painel ou `/ft fishtoast`; prévia com `/ft fishtest`.
+  O som toca no canal de Diálogo, subindo o volume só durante o som, para não ser
+  abaixado junto por addons de pesca ("Catch sound ignores lowered volume",
+  `/ft loudsound`).
 - **F para pescar:** com uma vara de pescar equipada e nada para interagir, F
   lança Pescaria; durante a pescaria e perto de qualquer coisa interagível, F volta
   a ser "Interagir" (para recolher a boia). Troca só fora de combate. Opção no

@@ -1,5 +1,16 @@
 # Farm Time — Changelog
 
+## v1.8.0
+
+- **Fish catch alert redesigned:** it now uses the game's own achievement alert art, textures, sizes and timings from the Blizzard AchievementAlertFrame.
+  - **Look:** the achievement background, the achievement icon frame, a flash glow, and a shine sweep across the alert.
+  - **Rarity:** the item's rarity colors the icon frame, the glow and the item name. Amount is shown below the name.
+- **Catch sound vs. fishing addons:** many fishing addons lower the game volume to make the bobber splash easier to hear, which also lowered the catch sound.
+  - **How it's avoided:** the catch sound now plays on the Dialog channel, and Dialog and master volume are raised only while it plays (about 3 seconds).
+  - **Restore:** volumes are put back afterwards, unless another addon changed them in the meantime.
+  - **Muted game:** if all game sound is off, nothing is forced.
+  - **Option:** "Catch sound ignores lowered volume" (`/ft loudsound`).
+
 ## v1.7.1
 
 - **Minimap button:** now registered through the standard LibDBIcon when another addon provides it (Questie, Details, Bartender and many others embed it). Minimap button collectors (MinimapButtonButton, Minimap Button Bag…) handle it like any other button and no longer warn about a "custom button". Without LibDBIcon, the old button is still used.
