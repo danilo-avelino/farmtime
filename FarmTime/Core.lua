@@ -18,6 +18,7 @@ FT.defaults = {
     savedCVars    = {},    -- valores originais, para /ft restore
     names         = {},    -- [nome do nó] = "herb" | "ore" (aprendido ao coletar)
     minimap       = { hide = false, angle = 215 }, -- botão no minimapa
+    ldbIcon       = {},    -- posição do botão quando registrado pela LibDBIcon
     bindInteractKey = true, -- liga a tecla abaixo ao "Interagir com o alvo"
     interactKey   = "F",
     savedBinding  = {},    -- o que a tecla fazia antes, para devolver

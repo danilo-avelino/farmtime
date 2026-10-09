@@ -1,5 +1,10 @@
 # Farm Time — Changelog
 
+## v1.7.1
+
+- **Minimap button:** now registered through the standard LibDBIcon when another addon provides it (Questie, Details, Bartender and many others embed it). Minimap button collectors (MinimapButtonButton, Minimap Button Bag…) handle it like any other button and no longer warn about a "custom button". Without LibDBIcon, the old button is still used.
+- **Fish catch animation:** now plays the game's achievement sound. On clients without achievements, it falls back to the epic loot sound.
+
 ## v1.7.0
 
 - **New: F to fish.**

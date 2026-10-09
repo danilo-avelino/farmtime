@@ -25,6 +25,8 @@ sessão com o valor do que foi coletado (preços do Auctionator).
 
 - **Botão do minimapa:** clique abre as configurações, clique direito liga/desliga,
   arrastar move o botão pela borda do minimapa.
+  Se outro addon trouxer a LibDBIcon (Questie, Details, Bartender...), o botão é
+  registrado por ela e funciona com coletores de botões do minimapa.
 - **Painel:** liga/desliga o destaque, filtro só ervas/minérios, som, tecla F,
   fast loot, janela da sessão, ícones de interação do jogo, debug, tamanho do
   ícone e alcance. Os botões "Diagnóstico" (`/ft status`), "Sessão" e "Testar
@@ -95,7 +97,7 @@ sessão com o valor do que foi coletado (preços do Auctionator).
   que escondem aquele tipo na placa, nos marcadores, na seta e no aviso "aperte F".
 - **Animação ao pescar:** cada item pescado mostra uma "conquista" com placa
   grande, ícone do item e borda/brilho na cor da raridade (cinza, branco, verde,
-  azul, roxo); entra deslizando, brilha e some. Vários itens entram em fila.
+  azul, roxo) e som de conquista; entra deslizando, brilha e some. Vários itens entram em fila.
   Opção no painel ou `/ft fishtoast`; prévia com `/ft fishtest`.
 - **F para pescar:** com uma vara de pescar equipada e nada para interagir, F
   lança Pescaria; durante a pescaria e perto de qualquer coisa interagível, F volta

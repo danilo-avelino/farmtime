@@ -185,29 +185,9 @@ end
 ---------------------------------------------------------------------------
 -- Botão do minimapa (arrastável pela borda)
 ---------------------------------------------------------------------------
-local button = CreateFrame("Button", "FarmTimeMinimapButton", Minimap)
-button:SetSize(31, 31)
-button:SetFrameStrata("MEDIUM")
-button:SetFrameLevel(8)
-button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-button:RegisterForDrag("LeftButton")
-button:SetHighlightTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
-
-local bg = button:CreateTexture(nil, "BACKGROUND")
-bg:SetTexture("Interface\\Minimap\\UI-Minimap-Background")
-bg:SetSize(20, 20)
-bg:SetPoint("TOPLEFT", 7, -5)
-
-local icon = button:CreateTexture(nil, "ARTWORK")
-icon:SetTexture(ICON)
-icon:SetSize(17, 17)
-icon:SetPoint("TOPLEFT", 7, -6)
-icon:SetTexCoord(0.05, 0.95, 0.05, 0.95)
-
-local border = button:CreateTexture(nil, "OVERLAY")
-border:SetTexture("Interface\\Minimap\\MiniMap-TrackingBorder")
-border:SetSize(53, 53)
-border:SetPoint("TOPLEFT")
+-- Criado só quando nenhuma LibDBIcon está disponível (senão coletores de
+-- botões reclamariam de um botão "custom" escondido).
+local button
 
 local function PlaceButton()
     local angle = math.rad(FT.db.minimap.angle)
@@ -225,43 +205,127 @@ local function OnDragUpdate()
     PlaceButton()
 end
 
-button:SetScript("OnDragStart", function(self)
-    self:SetScript("OnUpdate", OnDragUpdate)
-end)
-button:SetScript("OnDragStop", function(self)
-    self:SetScript("OnUpdate", nil)
-end)
+local function CreateOwnButton()
+    button = CreateFrame("Button", "FarmTimeMinimapButton", Minimap)
+    button:SetSize(31, 31)
+    button:SetFrameStrata("MEDIUM")
+    button:SetFrameLevel(8)
+    button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    button:RegisterForDrag("LeftButton")
+    button:SetHighlightTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
 
-button:SetScript("OnClick", function(_, mouse)
+    local bg = button:CreateTexture(nil, "BACKGROUND")
+    bg:SetTexture("Interface\\Minimap\\UI-Minimap-Background")
+    bg:SetSize(20, 20)
+    bg:SetPoint("TOPLEFT", 7, -5)
+
+    local icon = button:CreateTexture(nil, "ARTWORK")
+    icon:SetTexture(ICON)
+    icon:SetSize(17, 17)
+    icon:SetPoint("TOPLEFT", 7, -6)
+    icon:SetTexCoord(0.05, 0.95, 0.05, 0.95)
+
+    local border = button:CreateTexture(nil, "OVERLAY")
+    border:SetTexture("Interface\\Minimap\\MiniMap-TrackingBorder")
+    border:SetSize(53, 53)
+    border:SetPoint("TOPLEFT")
+
+    button:SetScript("OnDragStart", function(self)
+        self:SetScript("OnUpdate", OnDragUpdate)
+    end)
+    button:SetScript("OnDragStop", function(self)
+        self:SetScript("OnUpdate", nil)
+    end)
+
+    button:SetScript("OnClick", function(_, mouse)
+        if mouse == "RightButton" then
+            FT:SetOption("enabled", not FT.db.enabled)
+            FT:Print(FT.db.enabled and FT.L.ENABLED or FT.L.DISABLED)
+        else
+            FT:ToggleConfig()
+        end
+    end)
+
+    button:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+        GameTooltip:AddLine("Farm Time")
+        GameTooltip:AddLine(FT.db.enabled and ("|cff33ff33" .. FT.L.ENABLED .. "|r") or ("|cffff3333" .. FT.L.DISABLED .. "|r"))
+        GameTooltip:AddLine(FT.L.TT_CLICK, 1, 1, 1)
+        GameTooltip:AddLine(FT.L.TT_RIGHTCLICK, 1, 1, 1)
+        GameTooltip:AddLine(FT.L.TT_DRAG, 1, 1, 1)
+        GameTooltip:Show()
+    end)
+    button:SetScript("OnLeave", function() GameTooltip:Hide() end)
+end
+
+---------------------------------------------------------------------------
+-- LibDBIcon: se alguma biblioteca padrão de botões do minimapa estiver
+-- carregada (Questie, Details, Bartender e muitos outros a embutem), o botão
+-- do Farm Time é registrado por ela. Assim coletores de botões (MinimapButton-
+-- Button, Minimap Button Bag...) o reconhecem. Sem a biblioteca, fica o botão
+-- próprio acima.
+---------------------------------------------------------------------------
+local LDBIcon -- biblioteca em uso, ou nil
+
+local function OnClick(_, mouse)
     if mouse == "RightButton" then
         FT:SetOption("enabled", not FT.db.enabled)
         FT:Print(FT.db.enabled and FT.L.ENABLED or FT.L.DISABLED)
     else
         FT:ToggleConfig()
     end
-end)
+end
 
-button:SetScript("OnEnter", function(self)
-    GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-    GameTooltip:AddLine("Farm Time")
-    GameTooltip:AddLine(FT.db.enabled and ("|cff33ff33" .. FT.L.ENABLED .. "|r") or ("|cffff3333" .. FT.L.DISABLED .. "|r"))
-    GameTooltip:AddLine(FT.L.TT_CLICK, 1, 1, 1)
-    GameTooltip:AddLine(FT.L.TT_RIGHTCLICK, 1, 1, 1)
-    GameTooltip:AddLine(FT.L.TT_DRAG, 1, 1, 1)
-    GameTooltip:Show()
-end)
-button:SetScript("OnLeave", function() GameTooltip:Hide() end)
+local function FillTooltip(tt)
+    tt:AddLine("Farm Time")
+    tt:AddLine(FT.db.enabled and ("|cff33ff33" .. FT.L.ENABLED .. "|r") or ("|cffff3333" .. FT.L.DISABLED .. "|r"))
+    tt:AddLine(FT.L.TT_CLICK, 1, 1, 1)
+    tt:AddLine(FT.L.TT_RIGHTCLICK, 1, 1, 1)
+    tt:AddLine(FT.L.TT_DRAG, 1, 1, 1)
+end
+
+local function SetupLibDBIcon()
+    if not LibStub then return false end
+    local LDB = LibStub("LibDataBroker-1.1", true)
+    local DBI = LibStub("LibDBIcon-1.0", true)
+    if not (LDB and DBI) then return false end
+
+    local dataObject = LDB:NewDataObject("FarmTime", {
+        type = "launcher",
+        text = "Farm Time",
+        icon = ICON,
+        OnClick = OnClick,
+        OnTooltipShow = FillTooltip,
+    })
+    if not dataObject then return false end
+
+    -- Posição/visibilidade no formato da LibDBIcon (minimapPos em graus).
+    local saved = FT.db.ldbIcon
+    if saved.minimapPos == nil then saved.minimapPos = FT.db.minimap.angle end
+    saved.hide = FT.db.minimap.hide
+    DBI:Register("FarmTime", dataObject, saved)
+    LDBIcon = DBI
+    return true
+end
 
 function FT:UpdateMinimapButton()
-    if self.db.minimap.hide then
-        button:Hide()
+    if LDBIcon then
+        self.db.ldbIcon.hide = self.db.minimap.hide
+        if self.db.minimap.hide then LDBIcon:Hide("FarmTime") else LDBIcon:Show("FarmTime") end
     else
-        PlaceButton()
-        button:Show()
+        if not button then CreateOwnButton() end
+        if self.db.minimap.hide then
+            button:Hide()
+        else
+            PlaceButton()
+            button:Show()
+        end
     end
     self:RefreshConfig()
 end
 
 FT:RegisterEvent("PLAYER_LOGIN", function(self)
+    local ok, used = pcall(SetupLibDBIcon)
+    if not (ok and used) then LDBIcon = nil end
     self:UpdateMinimapButton()
 end)

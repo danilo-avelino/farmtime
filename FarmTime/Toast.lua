@@ -16,6 +16,18 @@ local FALLBACK_QUALITY = {
     [0] = { 0.62, 0.62, 0.62 }, [1] = { 1, 1, 1 }, [2] = { 0.12, 1, 0 },
     [3] = { 0, 0.44, 0.87 }, [4] = { 0.64, 0.21, 0.93 }, [5] = { 1, 0.5, 0 },
 }
+-- Som de "conquista obtida" do jogo (sound kit 12891). Se o cliente não tiver
+-- esse som (o Classic Era não tem conquistas), toca o som de loot épico.
+local ACHIEVEMENT_SOUND = 12891
+
+function FT:PlayAchievementSound()
+    local kit = (SOUNDKIT and SOUNDKIT.UI_ALERT_ACHIEVEMENT_GAINED) or ACHIEVEMENT_SOUND
+    local ok, willPlay = pcall(PlaySound, kit, "Master")
+    if ok and willPlay ~= false then return end
+    local fallback = SOUNDKIT and (SOUNDKIT.UI_EPICLOOT_TOAST or SOUNDKIT.IG_QUEST_LIST_COMPLETE)
+    if fallback then pcall(PlaySound, fallback, "Master") end
+end
+
 local function QualityColor(quality)
     local c = ITEM_QUALITY_COLORS and quality and ITEM_QUALITY_COLORS[quality]
     if c and c.r then return { c.r, c.g, c.b } end
@@ -135,10 +147,7 @@ function ShowNext()
     enter:Play()
     shine:Play()
 
-    if FT.db.sound then
-        local kit = SOUNDKIT and (SOUNDKIT.UI_EPICLOOT_TOAST or SOUNDKIT.IG_QUEST_LIST_COMPLETE)
-        if kit then pcall(PlaySound, kit) end
-    end
+    if FT.db.sound then FT:PlayAchievementSound() end
 
     C_Timer.After(HOLD_TIME, function()
         shine:Stop()
