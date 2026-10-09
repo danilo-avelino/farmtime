@@ -93,6 +93,10 @@ sessão com o valor do que foi coletado (preços do Auctionator).
     `/ft clearnodes [all]`.
 - **Mostrar ervas / Mostrar minérios:** caixas no painel (`/ft herbs`, `/ft ores`)
   que escondem aquele tipo na placa, nos marcadores, na seta e no aviso "aperte F".
+- **Animação ao pescar:** cada item pescado mostra uma "conquista" com placa
+  grande, ícone do item e borda/brilho na cor da raridade (cinza, branco, verde,
+  azul, roxo); entra deslizando, brilha e some. Vários itens entram em fila.
+  Opção no painel ou `/ft fishtoast`; prévia com `/ft fishtest`.
 - **Comandos:** `/ft` abre o painel; `/ft help` lista os demais.
 
 ## Estrutura
@@ -106,6 +110,7 @@ sessão com o valor do que foi coletado (preços do Auctionator).
 | `Detection.lua` | Decide se o objeto é erva, minério ou outra coisa (listas do Classic + nomes aprendidos ao coletar) |
 | `Highlight.lua` | Liga as opções de alvo de interação do jogo e mostra o alerta |
 | `Prompt.lua` | Aviso "aperte F para coletar/minerar/esfolar" |
+| `Toast.lua` | "Conquista" animada ao pescar, com a cor da raridade |
 | `Style.lua` | Estilo de placa compartilhado (placa, marcadores, seta) |
 | `Share.lua` | Compartilhamento de nós com guilda e grupo (mensagens de addon) |
 | `Nodes.lua` | Guarda a posição dos nós coletados, confirma pelo minimapa e desenha os marcadores 3D |

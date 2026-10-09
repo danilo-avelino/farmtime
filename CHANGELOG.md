@@ -1,5 +1,13 @@
 # Farm Time — Changelog
 
+## v1.6.0
+
+- **New: fish catch animation.** Every item you fish up shows an achievement-style toast: a large plate with the item icon, name and amount.
+  - **Rarity color:** the border, glow and header use the item's rarity color (grey, white, green, blue, purple…), like the borders on herbs and ores.
+  - **Animation:** slides in with a pop and a pulsing glow, stays for a few seconds, then fades out.
+  - **Queue:** several items from one catch are shown one after another.
+  - **Options:** "Fish catch animation" in the panel or `/ft fishtoast`. Preview it with `/ft fishtest`.
+
 ## v1.5.5
 
 - **Arrow:** now always points to the nearest available (confirmed) node. Unavailable grey nodes are ignored, even when they are shown.

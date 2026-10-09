@@ -69,6 +69,7 @@ FT:RegisterEvent("LOOT_SLOT_CLEARED", function(self, slot)
     if item then
         snapshot[slot] = nil
         self:AddSessionItem(item)
+        if item.kind == "fish" and self.ShowFishToast then self:ShowFishToast(item) end
     end
 end)
 
