@@ -84,6 +84,14 @@ sessão com o valor do que foi coletado (preços do Auctionator).
     (confirmado) mais próximo, ignorando os cinzas (até 400 jardas), com o ícone, o nome e a distância; verde para
     erva, laranja para minério. Arraste para mudar de lugar (a posição fica
     salva). `/ft arrow` liga/desliga, `/ft arrowrange <jd>` muda o alcance.
+  - **Nós desconhecidos:** ao passar o mouse sobre um ponto de erva/minério no
+    minimapa que ainda não está na sua base, o addon cria um nó
+    **desconhecido** (amarelo, com "?") na posição do cursor; a seta e os
+    marcadores apontam para ele. Ao coletar, vira um nó normal com a posição
+    exata; se sumir do minimapa ou a confirmação vencer (5 min), é apagado.
+    Não é compartilhado (a posição é aproximada). `/ft unknown` liga/desliga.
+    O addon não consegue ler o minimapa sozinho: só descobre o ponto quando
+    você passa o mouse sobre ele.
   - **Visual:** marcadores, seta e placa sobre o nó usam o mesmo estilo de
     "placa" (fundo escuro, borda e faixa na cor do recurso, ícone emoldurado).
   - **Compartilhar:** opções "Share nodes with my guild" e "... party/raid"

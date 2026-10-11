@@ -17,6 +17,7 @@ Style.COLORS = {
     skin  = { 0.9, 0.6, 0.4 },
     other = { 0.6, 0.8, 1.0 },
     grey  = { 0.55, 0.55, 0.55 },
+    unknown = { 1.0, 0.85, 0.1 }, -- amarelo, como o ponto do minimapa
 }
 
 -- Moldura de 4 texturas finas. inset > 0 desenha por fora do frame.

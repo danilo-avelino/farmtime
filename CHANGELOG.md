@@ -1,5 +1,15 @@
 # Farm Time — Changelog
 
+## v1.9.0
+
+- **New: unknown nodes from the minimap.** Hovering a herb or ore tracking dot on the minimap that isn't in your saved nodes adds it as an **unknown** node at the cursor position.
+  - **Look:** yellow border with a "?" on the in-world marker; the arrow shows "? <name>" and "Unknown - <distance>".
+  - **Arrow:** points to unknown nodes like any other available node, so you can walk to herbs and ores you have never gathered.
+  - **Position:** each new hover refines the approximate position. Gathering it turns it into a normal saved node at your exact position.
+  - **Cleanup:** unknown nodes are deleted when their dot is gone from the minimap, after 5 minutes without confirmation, or when the option is turned off. They are never shared (their position is approximate).
+  - **Option:** "Unknown nodes spotted on the minimap" (on by default), or `/ft unknown`.
+  - **Limitation:** addons can't read minimap dots on their own; a node is only spotted when you hover its dot.
+
 ## v1.8.0
 
 - **Fish catch alert redesigned:** it now uses the game's own achievement alert art, textures, sizes and timings from the Blizzard AchievementAlertFrame.

@@ -14,6 +14,10 @@
 --    - ou o jogo escolhe esse nó como alvo de interação (você está perto dele).
 --    Depois de coletado, volta a ficar cinza. A confirmação vale por alguns
 --    minutos (alguém pode coletar antes de você).
+-- 4. Ponto de erva/minério no minimapa SEM nó salvo por perto vira um nó
+--    "desconhecido" (amarelo, com "?"), na posição do cursor. A seta e os
+--    marcadores apontam para ele. Ao coletar, vira um nó normal com a posição
+--    exata; se sumir do minimapa ou a confirmação vencer, é apagado.
 
 local _, FT = ...
 
@@ -104,10 +108,10 @@ local function NodesHere(instanceID, create)
     return list
 end
 
-local function FindNode(list, name, x, y, maxDist)
+local function FindNode(list, name, x, y, maxDist, onlyUnknown)
     local best, bestD2 = nil, maxDist * maxDist
     for _, n in ipairs(list) do
-        if n.name == name then
+        if n.name == name and (not onlyUnknown or n.unknown) then
             local d2 = Distance2(n, x, y)
             if d2 <= bestD2 then best, bestD2 = n, d2 end
         end
@@ -124,7 +128,13 @@ function FT:RecordNode(kind, name)
     if not x then return end
     local list = NodesHere(inst, true)
     local node = FindNode(list, name, x, y, MERGE_DISTANCE)
-    if node then
+        or FindNode(list, name, x, y, CONFIRM_DISTANCE, true)
+    if node and node.unknown then
+        -- Desconhecido (posição aproximada do minimapa): passa a valer a sua.
+        node.x, node.y, node.z = x, y, z
+        node.count, node.unknown = 1, nil
+        if self.db.debug then self:Print(string.format(self.L.NODE_SAVED, name)) end
+    elseif node then
         -- Média com a posição anterior: fica mais perto do nó a cada coleta.
         node.x, node.y = (node.x + x) / 2, (node.y + y) / 2
         node.count = (node.count or 1) + 1
@@ -178,15 +188,25 @@ local function Confirm(name, x, y, inst, tolerance, grace)
     if not list then return end
     local node = FindNode(list, name, x, y, tolerance)
     if not node then return end
-    if grace and node.gatheredAt and time() - node.gatheredAt < grace then return end
+    if grace and node.gatheredAt and time() - node.gatheredAt < grace then return node end
     node.missSince = nil
     if FT.db.debug and not IsConfirmed(node) then
         FT:Print(string.format(FT.L.NODE_CONFIRMED, node.name))
     end
     local was = IsConfirmed(node)
     node.confirmedAt = time()
-    -- Só avisa os outros na mudança "não confirmado -> confirmado".
-    if not was and FT.ShareNode then FT:ShareNode("C", node, inst) end
+    -- Só avisa os outros na mudança "não confirmado -> confirmado". Os
+    -- desconhecidos não são enviados: a posição deles é aproximada.
+    if not was and FT.ShareNode and not node.unknown then FT:ShareNode("C", node, inst) end
+    return node
+end
+
+-- Ponto do minimapa sem nó salvo por perto: cria um nó "desconhecido".
+local function AddUnknown(name, kind, x, y, inst)
+    local list = NodesHere(inst, true)
+    table.insert(list, { x = x, y = y, name = name, kind = kind, count = 0,
+        unknown = true, confirmedAt = time() })
+    if FT.db.debug then FT:Print(string.format(FT.L.NODE_UNKNOWN_FOUND, name)) end
 end
 
 -- Nó recebido de outro jogador (Share.lua). code: "C" = confirmado agora,
@@ -198,6 +218,9 @@ function FT:ApplySharedNode(code, inst, x, y, kind, name)
     if not node then
         node = { x = x, y = y, name = name, kind = kind, count = 0, shared = true }
         table.insert(list, node)
+    elseif node.unknown then
+        -- A posição de quem enviou é a do personagem dele no nó: mais exata.
+        node.x, node.y, node.unknown, node.shared = x, y, nil, true
     end
     if code == "C" then
         node.confirmedAt = time()
@@ -283,7 +306,14 @@ local function ScanMinimapTooltip()
                     local name = line:match("^%s*(.-)%s*$")
                     if name ~= "" then
                         names[name] = true
-                        Confirm(name, x, y, inst, CONFIRM_DISTANCE, GRACE_MINIMAP)
+                        local node = Confirm(name, x, y, inst, CONFIRM_DISTANCE, GRACE_MINIMAP)
+                        if node and node.unknown then
+                            -- Cada passada do mouse refina a posição aproximada.
+                            node.x, node.y = (node.x + x) / 2, (node.y + y) / 2
+                        elseif not node and FT.db.trackUnknown then
+                            local kind = FT:Classify(name)
+                            if kind == "herb" or kind == "ore" then AddUnknown(name, kind, x, y, inst) end
+                        end
                     end
                 end
             end
@@ -461,11 +491,14 @@ local function UpdateArrow(list, x, y, facing)
     arrow.tex:SetRotation(rel)
 
     local confirmed = IsConfirmed(best)
-    local c = confirmed and (COLORS[best.kind] or COLORS.herb) or COLORS.grey
+    local color = best.unknown and COLORS.unknown or COLORS[best.kind] or COLORS.herb
+    local c = confirmed and color or COLORS.grey
     arrow.tex:SetVertexColor(c[1], c[2], c[3])
+    local dist = string.format(FT.L.HUD_DISTANCE, math.floor(sqrt(bestD2) + 0.5))
     arrow.plate:SetContent(FT:GetNodeIcon(best.name) or "Interface\\Icons\\INV_Misc_QuestionMark",
-        best.name, string.format(FT.L.HUD_DISTANCE, math.floor(sqrt(bestD2) + 0.5)),
-        COLORS[best.kind] or COLORS.herb, 24, not confirmed)
+        best.unknown and ("? " .. best.name) or best.name,
+        best.unknown and (FT.L.NODE_UNKNOWN .. " - " .. dist) or dist,
+        color, 24, not confirmed)
     arrow.plate:SetAlpha(1)
     arrow:Show()
 end
@@ -494,9 +527,10 @@ local function UpdateMarkers()
                     local m = GetMarker(used)
                     local size = math.floor(math.max(14, math.min(40, db.iconSize * 30 / depth)))
                     m.icon:SetVertexColor(1, 1, 1)
+                    local dist = string.format(FT.L.HUD_DISTANCE, math.floor(sqrt(d2) + 0.5))
                     m:SetContent(FT:GetNodeIcon(n.name) or "Interface\\Icons\\INV_Misc_QuestionMark",
-                        string.format(FT.L.HUD_DISTANCE, math.floor(sqrt(d2) + 0.5)), nil,
-                        COLORS[n.kind] or COLORS.herb, size, not confirmed)
+                        n.unknown and ("? " .. dist) or dist, nil,
+                        n.unknown and COLORS.unknown or COLORS[n.kind] or COLORS.herb, size, not confirmed)
                     PlaceMarker(m, sx, sy, size)
                     m:Show()
                 end
@@ -526,8 +560,28 @@ local function UpdateMarkers()
     UpdateArrow(list, x, y, facing)
 end
 
+-- Desconhecidos que perderam a confirmação (sumiram do minimapa, venceram
+-- ou a opção foi desligada) são apagados: não há posição real para guardar.
+local function PruneUnknown()
+    for _, list in pairs(FT.db.nodes) do
+        for i = #list, 1, -1 do
+            local n = list[i]
+            if n.unknown and (not FT.db.trackUnknown or not IsConfirmed(n)) then
+                table.remove(list, i)
+            end
+        end
+    end
+end
+
+local sincePrune = 0
 C_Timer.NewTicker(0.05, function()
-    if FT.db then UpdateMarkers() end
+    if not FT.db then return end
+    sincePrune = sincePrune + 0.05
+    if sincePrune >= 1 then
+        sincePrune = 0
+        PruneUnknown()
+    end
+    UpdateMarkers()
 end)
 
 ---------------------------------------------------------------------------
