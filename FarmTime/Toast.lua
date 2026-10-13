@@ -5,6 +5,10 @@
 -- fundo da conquista, moldura do ícone, brilho que pisca e um reflexo que
 -- atravessa a placa. A raridade do item colore a moldura do ícone, o brilho e
 -- o nome (cinza, branco, verde, azul, roxo...). Vários itens entram em fila.
+--
+-- O mesmo alerta aparece para qualquer item verde ou melhor saqueado (o fast
+-- loot esconde a janela de saque). Com o mouse em cima, o alerta mostra o
+-- tooltip do item e não some; Shift+clique põe o link do item no chat.
 
 local _, FT = ...
 
@@ -92,7 +96,7 @@ local toast = CreateFrame("Frame", "FarmTimeFishToast", UIParent)
 toast:SetSize(300, 88)
 toast:SetPoint("TOP", UIParent, "TOP", 0, -140)
 toast:SetFrameStrata("HIGH")
-toast:EnableMouse(false)
+toast:EnableMouse(true)
 toast:Hide()
 
 toast.bg = toast:CreateTexture(nil, "BACKGROUND")
@@ -172,12 +176,50 @@ o:SetFromAlpha(1); o:SetToAlpha(0); o:SetDuration(1.5)
 ---------------------------------------------------------------------------
 local queue = {}
 local showing = false
+local current      -- item na tela
+local holdTimer
 local ShowNext
+
+-- Começa a sumir depois de "delay" segundos, a não ser que o mouse esteja em cima.
+local function ScheduleHide(delay)
+    if holdTimer then holdTimer:Cancel() end
+    holdTimer = C_Timer.NewTimer(delay, function()
+        holdTimer = nil
+        if not toast:IsMouseOver() then fadeOut:Play() end
+    end)
+end
 
 fadeOut:SetScript("OnFinished", function()
     toast:Hide()
     showing = false
+    current = nil
     ShowNext()
+end)
+
+-- Mouse em cima: para de sumir e mostra o que o item faz.
+local function OnEnter(self)
+    if holdTimer then holdTimer:Cancel(); holdTimer = nil end
+    fadeOut:Stop()
+    self:SetAlpha(1)
+    local link = current and (current.link or (current.id and ("item:" .. current.id)))
+    if link then
+        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+        pcall(GameTooltip.SetHyperlink, GameTooltip, link)
+        GameTooltip:Show()
+    end
+end
+toast:SetScript("OnEnter", OnEnter)
+
+toast:SetScript("OnLeave", function()
+    GameTooltip:Hide()
+    if showing then ScheduleHide(1.5) end
+end)
+
+-- Shift+clique: link do item no chat (como em qualquer item do jogo).
+toast:SetScript("OnMouseUp", function()
+    if current and current.link and IsModifiedClick and IsModifiedClick("CHATLINK") then
+        if ChatEdit_InsertLink then ChatEdit_InsertLink(current.link) end
+    end
 end)
 
 function ShowNext()
@@ -185,9 +227,10 @@ function ShowNext()
     local item = table.remove(queue, 1)
     if not item then return end
     showing = true
+    current = item
 
     local c = QualityColor(item.quality)
-    toast.header:SetText(FT.L.FISH_CAUGHT)
+    toast.header:SetText(item.header or FT.L.FISH_CAUGHT)
     toast.name:SetText(item.name or "?")
     toast.name:SetTextColor(c[1], c[2], c[3])
     toast.count:SetText((item.count and item.count > 1) and ("x" .. item.count) or "")
@@ -206,14 +249,27 @@ function ShowNext()
 
     if FT.db.sound then FT:PlayAchievementSound() end
 
-    C_Timer.After(HOLD_TIME, function() fadeOut:Play() end)
+    -- Item novo chegando com o mouse já em cima: mostra o tooltip dele.
+    if toast:IsMouseOver() then OnEnter(toast) end
+    ScheduleHide(HOLD_TIME)
+end
+
+local function Enqueue(item)
+    if #queue >= MAX_QUEUE then return end
+    table.insert(queue, item)
+    ShowNext()
 end
 
 function FT:ShowFishToast(item)
     if not (self.db and self.db.fishToast) then return end
-    if #queue >= MAX_QUEUE then return end
-    table.insert(queue, item)
-    ShowNext()
+    Enqueue(item)
+end
+
+-- Qualquer item verde ou melhor saqueado.
+function FT:ShowLootToast(item)
+    if not (self.db and self.db.lootToast) then return end
+    item.header = self.L.LOOT_TOAST
+    Enqueue(item)
 end
 
 -- Prévia: /ft fishtest
@@ -225,4 +281,15 @@ function FT:TestFishToast()
     self:ShowFishToast({ name = "Firefin Snapper", icon = icon(6359, "Interface\\Icons\\INV_Misc_Fish_02"), count = 1, quality = 1 })
     self:ShowFishToast({ name = "Raw Sagefish", icon = icon(21071, "Interface\\Icons\\INV_Misc_Fish_20"), count = 2, quality = 2 })
     self:ShowFishToast({ name = "Shiny Bauble", icon = icon(6529, "Interface\\Icons\\INV_Misc_Orb_03"), count = 1, quality = 3 })
+end
+
+-- Prévia: /ft loottest (passe o mouse para ver o tooltip)
+function FT:TestLootToast()
+    local function item(id, name, quality, fallback)
+        local ok, tex = pcall(C_Item and C_Item.GetItemIconByID or GetItemIcon, id)
+        return { id = id, link = "item:" .. id, name = name, quality = quality, count = 1,
+            icon = (ok and tex) or fallback }
+    end
+    self:ShowLootToast(item(1482, "Shadowfang", 3, "Interface\\Icons\\INV_Sword_01"))
+    self:ShowLootToast(item(18832, "Brutality Blade", 4, "Interface\\Icons\\INV_Sword_01"))
 end

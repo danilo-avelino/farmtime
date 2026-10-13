@@ -1,5 +1,14 @@
 # Farm Time — Changelog
 
+## v1.10.0
+
+- **New: loot alert.** With fast loot the loot window barely shows, so every looted item of **uncommon (green) quality or better** now shows the same achievement-style alert as fish, titled "Item looted!".
+  - **Tooltip:** hover the alert to see the item's tooltip.
+  - **Stays while hovered:** the alert doesn't fade while the mouse is over it. It fades 1.5 seconds after the mouse leaves; moving back over it during the fade brings it back.
+  - **Chat link:** Shift+click the alert to link the item in chat.
+  - **Fish alert:** now also shows the tooltip and stays while hovered.
+  - **Options:** "Alert for looted green or better items" (on by default), or `/ft loottoast`. Preview it with `/ft loottest`.
+
 ## v1.9.0
 
 - **New: unknown nodes from the minimap.** Hovering a herb or ore tracking dot on the minimap that isn't in your saved nodes adds it as an **unknown** node at the cursor position.

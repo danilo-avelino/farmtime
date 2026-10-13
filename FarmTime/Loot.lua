@@ -5,9 +5,12 @@
 --    (carne, pano, couro, elementais...), que são o que vende bem no leilão.
 -- 2. Fast loot: pega todos os itens assim que a janela de saque abre.
 --    Segurar a tecla de "inverter auto loot" (Shift, por padrão) desativa.
+-- 3. Item verde ou melhor saqueado mostra o alerta de conquista (Toast.lua),
+--    porque com o fast loot a janela de saque nem chega a aparecer.
 
 local _, FT = ...
 
+local LOOT_TOAST_QUALITY = 2 -- verde (incomum) para cima
 local snapshot = {}  -- [slot] = item que estava no slot quando o saque abriu
 local handled = false -- LOOT_READY pode disparar mais de uma vez por saque
 
@@ -37,10 +40,11 @@ local function TakeSnapshot(gatherKind, withTradeGoods)
             if not kind and withTradeGoods and not isQuestItem and IsTradeGood(itemID) then
                 kind = "mat"
             end
-            if kind then
+            local toast = FT.db.lootToast and quality and quality >= LOOT_TOAST_QUALITY
+            if kind or toast then
                 snapshot[slot] = {
                     id = itemID, link = link, name = name, icon = icon,
-                    count = quantity or 1, quality = quality, kind = kind,
+                    count = quantity or 1, quality = quality, kind = kind, toast = toast,
                 }
             end
         end
@@ -68,8 +72,12 @@ FT:RegisterEvent("LOOT_SLOT_CLEARED", function(self, slot)
     local item = snapshot[slot]
     if item then
         snapshot[slot] = nil
-        self:AddSessionItem(item)
-        if item.kind == "fish" and self.ShowFishToast then self:ShowFishToast(item) end
+        if item.kind then self:AddSessionItem(item) end
+        if item.kind == "fish" then
+            self:ShowFishToast(item)
+        elseif item.toast then
+            self:ShowLootToast(item)
+        end
     end
 end)
 

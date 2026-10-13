@@ -103,6 +103,12 @@ sessão com o valor do que foi coletado (preços do Auctionator).
     `/ft clearnodes [all]`.
 - **Mostrar ervas / Mostrar minérios:** caixas no painel (`/ft herbs`, `/ft ores`)
   que escondem aquele tipo na placa, nos marcadores, na seta e no aviso "aperte F".
+- **Alerta de saque:** com o fast loot a janela de saque nem aparece, então todo
+  item **verde ou melhor** saqueado mostra o mesmo alerta de conquista da pesca,
+  com o título "Item saqueado!". Passe o mouse sobre o alerta para ver o
+  tooltip do item; enquanto o mouse estiver em cima, ele não some (some 1,5 s
+  depois que o mouse sai). Shift+clique põe o link do item no chat.
+  Opção no painel ou `/ft loottoast`; prévia com `/ft loottest`.
 - **Animação ao pescar:** cada item pescado mostra um alerta com o visual do
   alerta de conquista do próprio WoW (fundo, moldura do ícone, brilho e reflexo),
   com a moldura do ícone, o brilho e o nome na cor da raridade (cinza, branco,
