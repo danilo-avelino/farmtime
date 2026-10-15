@@ -519,6 +519,16 @@ FT:RegisterEvent("PLAYER_LOGIN", function(self)
     end
 end)
 
+-- O nó já está visível como alvo de interação (com a placa grande)? Então
+-- não desenha marcador nem seta para ele. Um desconhecido com o mesmo nome por
+-- perto é essa mesma erva com a posição estimada: some também.
+local SEEN_RADIUS = 60
+local function IsCurrentTarget(n, target, d2)
+    if not (target and n.name == target) then return false end
+    local r = n.unknown and SEEN_RADIUS or MERGE_DISTANCE
+    return d2 < r * r
+end
+
 local function UpdateArrow(list, x, y, facing)
     local db = FT.db
     local best, bestD2
@@ -527,7 +537,7 @@ local function UpdateArrow(list, x, y, facing)
         local target = FT.currentTargetName
         for _, n in ipairs(list) do
             local d2 = Distance2(n, x, y)
-            local isTarget = target and n.name == target and d2 < MERGE_DISTANCE * MERGE_DISTANCE
+            local isTarget = IsCurrentTarget(n, target, d2)
             -- A seta só aponta para nós DISPONÍVEIS (confirmados), mesmo com a
             -- opção de mostrar os indisponíveis ligada.
             if d2 <= maxD2 and not isTarget and IsConfirmed(n) and FT:KindVisible(n.kind)
@@ -618,7 +628,7 @@ local function UpdateMarkers()
         for _, n in ipairs(list) do
             local d2 = Distance2(n, x, y)
             -- O nó que já é alvo de interação ganha a placa grande; não duplica.
-            local isTarget = target and n.name == target and d2 < MERGE_DISTANCE * MERGE_DISTANCE
+            local isTarget = IsCurrentTarget(n, target, d2)
             local confirmed = IsConfirmed(n)
             if d2 <= range2 and not isTarget and (confirmed or db.hudShowUnconfirmed)
                 and FT:KindVisible(n.kind) then

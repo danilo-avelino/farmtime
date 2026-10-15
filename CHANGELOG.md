@@ -1,5 +1,9 @@
 # Farm Time — Changelog
 
+## v1.11.1
+
+- **Unknown predictions hide when the real node is in sight.** When the game picks a herb/ore as your interact target (the big plate over it), unknown nodes with the same name within 60 yards are hidden: no "?" marker and no arrow to them. They come back if the target goes away without being gathered. Gathering removes them as before.
+
 ## v1.11.0
 
 - **Unknown nodes are corrected as you get close.** The minimap only gives a rough position, so the marker and arrow could point a few yards to the side of the real herb/ore.
