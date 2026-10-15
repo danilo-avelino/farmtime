@@ -18,6 +18,10 @@
 --    "desconhecido" (amarelo, com "?"), na posição do cursor. A seta e os
 --    marcadores apontam para ele. Ao coletar, vira um nó normal com a posição
 --    exata; se sumir do minimapa ou a confirmação vencer, é apagado.
+--    Ao chegar perto, a posição é corrigida: quando o jogo escolhe a erva
+--    como alvo de interação, a placa de nome dela na tela é convertida de
+--    volta para uma posição no chão (o inverso da projeção dos marcadores);
+--    ao entrar no alcance de coleta, o nó vai para a sua posição.
 
 local _, FT = ...
 
@@ -324,7 +328,9 @@ local function ScanMinimapTooltip()
                     if name ~= "" then
                         names[name] = true
                         local node = Confirm(name, x, y, inst, dotRadius, GRACE_MINIMAP)
-                        if node and node.unknown then
+                        if node and node.unknown and node.near then
+                            -- Já corrigido de perto: o minimapa é menos preciso.
+                        elseif node and node.unknown then
                             -- Cada posição do cursor sobre o ponto entra na média:
                             -- passando o mouse pelo ponto todo, a média cai no centro.
                             local k = math.min(node.samples or 1, 30)
@@ -443,6 +449,25 @@ local function Project(dx, dy, dz, facing, W, H)
     return sx, sy, depth
 end
 
+-- Inverso de Project: ponto da tela -> ponto no mundo à altura "groundZ"
+-- (relativa aos pés do personagem). Retorna dx, dy (norte, oeste) ou nil.
+local function Unproject(sx, sy, groundZ, facing, W, H)
+    local db = FT.db
+    local pitch = rad(db.hudPitch)
+    local d = CameraDistance()
+    local cp, sp = cos(pitch), sin(pitch)
+    local focal = (W / 2) / tan(rad(db.hudFov) / 2)
+    local a, b = (sx - W / 2) / focal, (sy - H / 2) / focal
+    -- Raio da câmera nas direções frente (F), cima (U) e direita (R) do personagem.
+    local dirF, dirU, dirR = cp + b * sp, -sp + b * cp, a
+    local camF, camU = -d * cp, HEAD_HEIGHT + d * sp
+    if dirU >= -0.01 then return nil end -- raio não desce até o chão
+    local t = (camU - groundZ) / -dirU
+    local F, R = camF + t * dirF, t * dirR
+    local cf, sf = cos(facing), sin(facing)
+    return F * cf + R * sf, F * sf - R * cf
+end
+
 -- Marcador temporário de calibração: fica onde você estava ao usar /ft calibrate.
 local calibration -- { x, y, z, inst, until }
 
@@ -534,12 +559,57 @@ local function UpdateArrow(list, x, y, facing)
     arrow:Show()
 end
 
+---------------------------------------------------------------------------
+-- Correção de desconhecidos ao chegar perto
+---------------------------------------------------------------------------
+local PLATE_HEIGHT  = 1.5  -- jardas: a placa de nome fica um pouco acima do chão
+local MAX_ESTIMATE  = 40   -- jardas: estimativa mais longe que isso é descartada
+local BLEND         = 0.35 -- quanto cada estimativa puxa o nó (0-1)
+local sinceCorrect = 0
+
+local function CorrectUnknown(list, x, y, facing)
+    local name = FT.currentTargetName
+    if not (list and name) then return end
+    local kind = FT:Classify(name)
+    if kind ~= "herb" and kind ~= "ore" then return end
+
+    -- No alcance de coleta: o nó está a poucos passos; vai para a sua posição.
+    if FT:InGatherRange(kind) == true then
+        local node = FindNode(list, name, x, y, UNKNOWN_MERGE, "unknown")
+        if node then node.x, node.y, node.near = x, y, true end
+        return
+    end
+
+    -- De longe: a placa de nome do jogo está sobre a erva; converte o ponto
+    -- da tela para o chão e puxa o nó para lá aos poucos.
+    local plate = FT:GetInteractPlate()
+    if not (plate and plate.IsVisible and plate:IsVisible()) then return end
+    local ok, cx = pcall(plate.GetCenter, plate)
+    local okb, bottom = pcall(plate.GetBottom, plate)
+    if not (ok and okb and cx and bottom) then return end
+    local k = plate:GetEffectiveScale() / overlay:GetEffectiveScale()
+    local dx, dy = Unproject(cx * k, bottom * k, PLATE_HEIGHT, facing, overlay:GetWidth(), overlay:GetHeight())
+    if not dx or dx * dx + dy * dy > MAX_ESTIMATE * MAX_ESTIMATE then return end
+    local ex, ey = x + dx, y + dy
+    local node = FindNode(list, name, ex, ey, UNKNOWN_MERGE, "unknown")
+    if node and not node.near then
+        node.x = node.x + (ex - node.x) * BLEND
+        node.y = node.y + (ey - node.y) * BLEND
+    end
+end
+
 local function UpdateMarkers()
     local db = FT.db
     local used = 0
     local x, y, z, inst = PlayerPosition()
     local facing = PlayerFacing(x, y)
     local list = x and facing and NodesHere(inst)
+
+    sinceCorrect = sinceCorrect + 0.05
+    if list and sinceCorrect >= 0.2 then
+        sinceCorrect = 0
+        pcall(CorrectUnknown, list, x, y, facing)
+    end
 
     if list and db.hudEnabled then
         local W, H = overlay:GetWidth(), overlay:GetHeight()

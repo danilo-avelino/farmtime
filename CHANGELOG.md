@@ -1,5 +1,12 @@
 # Farm Time — Changelog
 
+## v1.11.0
+
+- **Unknown nodes are corrected as you get close.** The minimap only gives a rough position, so the marker and arrow could point a few yards to the side of the real herb/ore.
+  - **When the game targets it:** the game's name plate is on top of the real node. Its screen position is converted back to a ground position (the reverse of the marker projection), and the node is pulled toward it a little every 0.2 seconds. The marker and arrow slide onto the real node as you walk.
+  - **In gathering range:** the node moves to your position, and later minimap hovers no longer move it.
+  - **Accuracy:** this uses the camera angle from the calibration (`/ft calibrate`) and works best with the camera behind your character. Estimates more than 40 yards away are ignored.
+
 ## v1.10.1
 
 - **Fixed: the same herb/ore showed up twice** (a saved grey node plus a yellow "unknown" one next to it).

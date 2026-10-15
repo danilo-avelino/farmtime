@@ -90,6 +90,9 @@ sessão com o valor do que foi coletado (preços do Auctionator).
     marcadores apontam para ele. Ao coletar, vira um nó normal com a posição
     exata; se sumir do minimapa ou a confirmação vencer (5 min), é apagado.
     Não é compartilhado (a posição é aproximada). `/ft unknown` liga/desliga.
+    Ao chegar perto, a posição é corrigida: quando o jogo escolhe a erva como
+    alvo de interação, a placa de nome dela na tela vira uma posição no chão e
+    o nó desliza para lá; no alcance de coleta, vai para a sua posição.
     O addon não consegue ler o minimapa sozinho: só descobre o ponto quando
     você passa o mouse sobre ele.
   - **Visual:** marcadores, seta e placa sobre o nó usam o mesmo estilo de

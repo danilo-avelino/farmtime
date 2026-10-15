@@ -142,7 +142,11 @@ local function Known(v)
     return v ~= nil and not (issecretvalue and issecretvalue(v))
 end
 
-local function InRange(kind)
+local InRange
+-- true/false/nil: dá para coletar/esfolar o alvo de interação daqui?
+function FT:InGatherRange(kind) return InRange(kind) end
+
+function InRange(kind)
     local spellID = RANGE_SPELLS[kind]
     if C_Spell and C_Spell.IsSpellInRange then
         local ok, r = pcall(C_Spell.IsSpellInRange, spellID, UNIT)

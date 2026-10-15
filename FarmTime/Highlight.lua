@@ -87,6 +87,7 @@ end
 local function GetInteractPlate()
     return C_NamePlate and Safe(C_NamePlate.GetNamePlateForUnit, UNIT)
 end
+function FT:GetInteractPlate() return GetInteractPlate() end
 
 -- Lê o alvo de interação atual. Retorna guid, nome, tipo (ou nil).
 -- UnitExists() costuma ser falso para objetos (não são unidades), então não
