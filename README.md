@@ -90,6 +90,7 @@ sessão com o valor do que foi coletado (preços do Auctionator).
     marcadores apontam para ele. Ao coletar, vira um nó normal com a posição
     exata; se sumir do minimapa ou a confirmação vencer (5 min), é apagado.
     Não é compartilhado (a posição é aproximada). `/ft unknown` liga/desliga.
+    Só existe uma previsão por vez: a última vista substitui as anteriores.
     Ao chegar perto, a posição é corrigida: quando o jogo escolhe a erva como
     alvo de interação, a placa de nome dela na tela vira uma posição no chão e
     o nó desliza para lá; no alcance de coleta, vai para a sua posição.
@@ -145,7 +146,7 @@ sessão com o valor do que foi coletado (preços do Auctionator).
 | `Keybind.lua` | Liga a tecla F ao "Interagir com o alvo" e guarda o atalho anterior |
 | `Loot.lua` | Fast loot e registro do que foi saqueado de coletas e dos materiais de profissão |
 | `Session.lua` | Janela da sessão: itens, valores do Auctionator, total, timer e reset |
-| `Media/Arrow.tga` | Textura da seta (branca, tingida pela cor do recurso) |
+| `Media/Arrow3D.tga` | Seta 3D pré-renderizada: 64 ângulos numa folha 8x8 (branca, tingida pela cor do recurso); gerada por `tools/render_arrow3d.py` |
 | `Config.lua` | Painel de configurações e botão do minimapa (sem bibliotecas externas) |
 
 ## Como funciona

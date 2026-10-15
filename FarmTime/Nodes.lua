@@ -222,7 +222,14 @@ local function Confirm(name, x, y, inst, tolerance, grace)
 end
 
 -- Ponto do minimapa sem nó salvo por perto: cria um nó "desconhecido".
+-- Só existe UMA previsão por vez: a última vista substitui as anteriores
+-- (várias estimativas aproximadas só poluíam a tela).
 local function AddUnknown(name, kind, x, y, inst)
+    for _, l in pairs(FT.db.nodes) do
+        for i = #l, 1, -1 do
+            if l[i].unknown then table.remove(l, i) end
+        end
+    end
     local list = NodesHere(inst, true)
     table.insert(list, { x = x, y = y, name = name, kind = kind, count = 0,
         unknown = true, samples = 1, confirmedAt = time() })
@@ -484,10 +491,14 @@ end
 ---------------------------------------------------------------------------
 -- Seta para o nó confirmado mais próximo (estilo TomTom)
 ---------------------------------------------------------------------------
-local ARROW_TEXTURE = "Interface\\AddOns\\FarmTime\\Media\\Arrow"
+-- Seta 3D pré-renderizada (tools/render_arrow3d.py): 64 quadros de 128x128
+-- numa folha 8x8, um a cada 5,6 graus, girando no sentido anti-horário
+-- (quadro 0 = para frente). Branca, tingida pela cor do recurso.
+local ARROW_TEXTURE = "Interface\\AddOns\\FarmTime\\Media\\Arrow3D"
+local ARROW_FRAMES, ARROW_COLS = 64, 8
 
 local arrow = CreateFrame("Frame", "FarmTimeArrow", UIParent)
-arrow:SetSize(56, 56)
+arrow:SetSize(72, 72)
 arrow:SetPoint("TOP", UIParent, "TOP", 0, -110)
 arrow:SetFrameStrata("MEDIUM")
 arrow:SetClampedToScreen(true)
@@ -552,9 +563,11 @@ local function UpdateArrow(list, x, y, facing)
     end
 
     -- Ângulo do nó em relação à frente do personagem (> 0 = à esquerda).
-    -- A seta desenhada aponta para cima; SetRotation gira no sentido anti-horário.
     local rel = atan2(best.y - y, best.x - x) - facing
-    arrow.tex:SetRotation(rel)
+    local frame = math.floor(rel / (2 * math.pi) * ARROW_FRAMES + 0.5) % ARROW_FRAMES
+    local col, row = frame % ARROW_COLS, math.floor(frame / ARROW_COLS)
+    local rows = ARROW_FRAMES / ARROW_COLS
+    arrow.tex:SetTexCoord(col / ARROW_COLS, (col + 1) / ARROW_COLS, row / rows, (row + 1) / rows)
 
     local confirmed = IsConfirmed(best)
     local color = best.unknown and COLORS.unknown or COLORS[best.kind] or COLORS.herb
@@ -673,11 +686,18 @@ end
 
 -- Desconhecidos que perderam a confirmação (sumiram do minimapa, venceram
 -- ou a opção foi desligada) são apagados: não há posição real para guardar.
+-- Também garante uma previsão só: sobra a mais recente.
 local function PruneUnknown()
+    local newest
+    for _, list in pairs(FT.db.nodes) do
+        for _, n in ipairs(list) do
+            if n.unknown and (not newest or (n.confirmedAt or 0) > (newest.confirmedAt or 0)) then newest = n end
+        end
+    end
     for _, list in pairs(FT.db.nodes) do
         for i = #list, 1, -1 do
             local n = list[i]
-            if n.unknown and (not FT.db.trackUnknown or not IsConfirmed(n)) then
+            if n.unknown and (n ~= newest or not FT.db.trackUnknown or not IsConfirmed(n)) then
                 table.remove(list, i)
             end
         end

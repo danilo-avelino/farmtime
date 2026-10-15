@@ -1,5 +1,10 @@
 # Farm Time — Changelog
 
+## v1.12.0
+
+- **New 3D arrow.** The flat arrow was replaced by a real 3D arrow (beveled, lit, with outline and ground shadow), pre-rendered from 64 angles. The arrow picks the frame for the node's direction instead of rotating a flat image. It is still tinted by the node color (green herb, orange ore, yellow unknown, grey unavailable) and slightly bigger.
+- **One unknown prediction at a time.** Several approximate "?" markers cluttered the screen. Now only the most recently seen unknown node is kept; spotting a new one replaces the previous one. Existing extra predictions are cleaned up automatically.
+
 ## v1.11.1
 
 - **Unknown predictions hide when the real node is in sight.** When the game picks a herb/ore as your interact target (the big plate over it), unknown nodes with the same name within 60 yards are hidden: no "?" marker and no arrow to them. They come back if the target goes away without being gathered. Gathering removes them as before.
