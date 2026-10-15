@@ -107,6 +107,12 @@ sessão com o valor do que foi coletado (preços do Auctionator).
     `/ft clearnodes [all]`.
 - **Mostrar ervas / Mostrar minérios:** caixas no painel (`/ft herbs`, `/ft ores`)
   que escondem aquele tipo na placa, nos marcadores, na seta e no aviso "aperte F".
+- **Tutorial:** no primeiro login aparece uma janela de duas páginas explicando
+  ervas/minérios (minimapa, marcador, seta, F) e a pesca com F. Para rever: botão
+  "Tutorial" no painel ou `/ft tutorial`.
+- **Aviso de rastreamento:** se o personagem conhece Find Herbs ou Find Minerals e
+  nenhum está ligado, aparece um aviso embaixo do minimapa (o X esconde até o
+  rastreamento mudar). Opção no painel ou `/ft trackwarn`.
 - **Alerta de saque:** com o fast loot a janela de saque nem aparece, então todo
   item **verde ou melhor** saqueado mostra o mesmo alerta de conquista da pesca,
   com o título "Item saqueado!". Passe o mouse sobre o alerta para ver o
@@ -147,6 +153,8 @@ sessão com o valor do que foi coletado (preços do Auctionator).
 | `Loot.lua` | Fast loot e registro do que foi saqueado de coletas e dos materiais de profissão |
 | `Session.lua` | Janela da sessão: itens, valores do Auctionator, total, timer e reset |
 | `Media/Arrow3D.tga` | Seta 3D pré-renderizada: 64 ângulos numa folha 8x8 (branca, tingida pela cor do recurso); gerada por `tools/render_arrow3d.py` |
+| `Tracking.lua` | Aviso quando Find Herbs/Find Minerals está desligado |
+| `Tutorial.lua` | Janela de tutorial (primeiro login, botão no painel, `/ft tutorial`) |
 | `Config.lua` | Painel de configurações e botão do minimapa (sem bibliotecas externas) |
 
 ## Como funciona

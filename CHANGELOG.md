@@ -1,5 +1,16 @@
 # Farm Time — Changelog
 
+## v1.13.0
+
+- **New: tutorial.** On the first login after installing (or updating), a short two-page window explains the main features.
+  - **Herbs and ores:** turn on Find Herbs/Find Minerals, hover a yellow dot on the minimap to get a marker and the arrow, press F to gather, and saved nodes come back with a quick minimap pass.
+  - **Fishing:** with a fishing pole, F casts; when the bobber splashes, F again catches the fish.
+  - **Reopen:** "Tutorial" button in the settings panel, or `/ft tutorial`.
+- **New: tracking warning.** If your character knows Find Herbs or Find Minerals and neither is active, a warning appears below the minimap.
+  - **Dismiss:** the X hides it until tracking changes.
+  - **Option:** "Warn when Find Herbs/Minerals is off" in the panel, or `/ft trackwarn`.
+  - **Hunters:** classic clients allow only one tracking type at a time, so use the X or the option if you are tracking beasts on purpose.
+
 ## v1.12.0
 
 - **New 3D arrow.** The flat arrow was replaced by a real 3D arrow (beveled, lit, with outline and ground shadow), pre-rendered from 64 angles. The arrow picks the frame for the node's direction instead of rotating a flat image. It is still tinted by the node color (green herb, orange ore, yellow unknown, grey unavailable) and slightly bigger.

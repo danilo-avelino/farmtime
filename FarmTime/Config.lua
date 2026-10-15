@@ -10,7 +10,7 @@ local ICON = "Interface\\Icons\\INV_Misc_Flower_02"
 -- Painel
 ---------------------------------------------------------------------------
 local panel = CreateFrame("Frame", "FarmTimeConfig", UIParent, "BasicFrameTemplateWithInset")
-panel:SetSize(650, 762)
+panel:SetSize(650, 790)
 panel:SetPoint("CENTER")
 panel:SetFrameStrata("DIALOG")
 panel:SetMovable(true)
@@ -107,6 +107,7 @@ AddCheckbox("hudEnabled",      "CFG_HUD")
 AddCheckbox("hudShowUnconfirmed", "CFG_GREY")
 AddCheckbox("arrowEnabled",    "CFG_ARROW")
 AddCheckbox("trackUnknown",    "CFG_UNKNOWN")
+AddCheckbox("trackingWarning", "CFG_TRACKWARN")
 AddCheckbox("shareGuild",      "CFG_SHARE_GUILD")
 AddCheckbox("shareGroup",      "CFG_SHARE_GROUP")
 AddCheckbox("manageCVars",     "CFG_CVARS")
@@ -173,6 +174,12 @@ calibrateBtn:SetSize(110, 22)
 calibrateBtn:SetPoint("LEFT", sessionBtn, "RIGHT", 8, 0)
 FT:T(calibrateBtn, "BTN_CALIBRATE")
 calibrateBtn:SetScript("OnClick", function() FT:StartCalibration() end)
+
+local tutorialBtn = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+tutorialBtn:SetSize(110, 22)
+tutorialBtn:SetPoint("LEFT", calibrateBtn, "RIGHT", 8, 0)
+FT:T(tutorialBtn, "BTN_TUTORIAL")
+tutorialBtn:SetScript("OnClick", function() FT:ShowTutorial() end)
 
 function FT:RefreshConfig()
     if not panel:IsShown() then return end

@@ -38,7 +38,9 @@ FT.defaults = {
     fishingKey    = true,  -- com vara equipada e nada para interagir, F lança Pescaria
     hudShowUnconfirmed = false, -- também mostrar (em cinza) nós ainda não confirmados
     arrowEnabled  = true,  -- seta para o nó confirmado mais próximo
-    trackUnknown  = true,  -- ponto do minimapa sem nó salvo vira nó "desconhecido"
+    trackUnknown  = true,
+    trackingWarning = true, -- aviso quando Find Herbs/Find Minerals está desligado
+    tutorialSeen  = false,  -- tutorial já mostrado (abre sozinho só uma vez)  -- ponto do minimapa sem nó salvo vira nó "desconhecido"
     arrowRange    = 400,   -- jardas: alcance da seta
     shareGuild    = false, -- compartilhar nós (confirmados/coletados) com a guilda
     shareGroup    = false, -- compartilhar nós com o grupo/raide
@@ -155,6 +157,7 @@ function FT:SetOption(key, value)
     end
     if self.UpdateFishingKey then self:UpdateFishingKey() end
     if self.UpdatePrompt then self:UpdatePrompt() end
+    if self.UpdateTrackingWarning then self:UpdateTrackingWarning() end
     self:RefreshHighlight()
     if self.RefreshConfig then self:RefreshConfig() end
 end
@@ -206,6 +209,8 @@ commands.ores   = Toggle("showOres", "OPT_ORES")
 commands.grey   = Toggle("hudShowUnconfirmed", "OPT_GREY")
 commands.arrow  = Toggle("arrowEnabled", "OPT_ARROW")
 commands.unknown = Toggle("trackUnknown", "OPT_UNKNOWN")
+commands.trackwarn = Toggle("trackingWarning", "OPT_TRACKWARN")
+commands.tutorial = function() FT:ShowTutorial() end
 commands.shareguild = Toggle("shareGuild", "OPT_SHARE_GUILD")
 commands.sharegroup = Toggle("shareGroup", "OPT_SHARE_GROUP")
 commands.arrowrange = Number("arrowRange", "OPT_ARROW_RANGE", 50, 2000)

@@ -4,7 +4,7 @@
 ## Notes: Highlights the herb/ore in front of you, F to gather, fast loot and a session window with Auctionator prices.
 ## Notes-ptBR: Destaca a erva/minério à frente, coleta com F, fast loot e janela da sessão com preços do Auctionator.
 ## Author: Danilo Avelino
-## Version: 1.12.0
+## Version: 1.13.0
 ## SavedVariables: FarmTimeDB
 ## IconTexture: Interface\Icons\INV_Misc_Flower_02
 
@@ -21,4 +21,6 @@ Keybind.lua
 Fishing.lua
 Loot.lua
 Session.lua
+Tracking.lua
+Tutorial.lua
 Config.lua
