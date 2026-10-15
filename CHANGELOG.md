@@ -1,5 +1,12 @@
 # Farm Time — Changelog
 
+## v1.13.1
+
+- **Arrow always goes to the nearest node.** Since v1.12.0, spotting a new unknown node on the minimap deleted every other unknown prediction, so the arrow could point to a far one while a closer node had been seen before.
+  - **Kept now:** different minimap dots are kept as separate predictions (up to 6), and the arrow picks the nearest available node. After you gather it, the arrow moves on to the next nearest one.
+  - **Same dot seen again:** a new prediction with the same name within 60 yards still replaces the old one, so there are no duplicates.
+  - **Clean screen:** only the nearest unknown prediction gets an on-screen marker.
+
 ## v1.13.0
 
 - **New: tutorial.** On the first login after installing (or updating), a short two-page window explains the main features.

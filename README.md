@@ -90,7 +90,9 @@ sessão com o valor do que foi coletado (preços do Auctionator).
     marcadores apontam para ele. Ao coletar, vira um nó normal com a posição
     exata; se sumir do minimapa ou a confirmação vencer (5 min), é apagado.
     Não é compartilhado (a posição é aproximada). `/ft unknown` liga/desliga.
-    Só existe uma previsão por vez: a última vista substitui as anteriores.
+    O mesmo ponto visto de novo substitui a previsão anterior (mesmo nome a até 60 jd);
+    pontos diferentes ficam guardados (até 6) e só o desconhecido mais próximo ganha marcador.
+    A seta sempre aponta para o nó disponível mais próximo.
     Ao chegar perto, a posição é corrigida: quando o jogo escolhe a erva como
     alvo de interação, a placa de nome dela na tela vira uma posição no chão e
     o nó desliza para lá; no alcance de coleta, vai para a sua posição.

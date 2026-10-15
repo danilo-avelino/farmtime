@@ -222,15 +222,31 @@ local function Confirm(name, x, y, inst, tolerance, grace)
 end
 
 -- Ponto do minimapa sem nó salvo por perto: cria um nó "desconhecido".
--- Só existe UMA previsão por vez: a última vista substitui as anteriores
--- (várias estimativas aproximadas só poluíam a tela).
+-- O mesmo ponto visto de novo com a posição um pouco diferente substitui a
+-- previsão anterior (mesmo nome a até UNKNOWN_SAME jardas); pontos diferentes
+-- convivem, até MAX_UNKNOWN, para a seta poder ir sempre ao mais próximo.
+local UNKNOWN_SAME = 60
+local MAX_UNKNOWN  = 6
 local function AddUnknown(name, kind, x, y, inst)
-    for _, l in pairs(FT.db.nodes) do
-        for i = #l, 1, -1 do
-            if l[i].unknown then table.remove(l, i) end
+    local list = NodesHere(inst, true)
+    local all = {}
+    for i = #list, 1, -1 do
+        local n = list[i]
+        if n.unknown then
+            if n.name == name and Distance2(n, x, y) <= UNKNOWN_SAME * UNKNOWN_SAME then
+                table.remove(list, i)
+            else
+                table.insert(all, n)
+            end
         end
     end
-    local list = NodesHere(inst, true)
+    -- Limite: sai a previsão vista há mais tempo.
+    table.sort(all, function(a, b) return (a.confirmedAt or 0) < (b.confirmedAt or 0) end)
+    for i = 1, #all - (MAX_UNKNOWN - 1) do
+        for j = #list, 1, -1 do
+            if list[j] == all[i] then table.remove(list, j) end
+        end
+    end
     table.insert(list, { x = x, y = y, name = name, kind = kind, count = 0,
         unknown = true, samples = 1, confirmedAt = time() })
     if FT.db.debug then FT:Print(string.format(FT.L.NODE_UNKNOWN_FOUND, name)) end
@@ -638,13 +654,23 @@ local function UpdateMarkers()
         local W, H = overlay:GetWidth(), overlay:GetHeight()
         local range2 = db.hudRange * db.hudRange
         local target = FT.currentTargetName
+        -- Previsões desconhecidas: só a mais próxima ganha marcador (tela limpa).
+        local nearestUnknown, nearestD2
+        for _, n in ipairs(list) do
+            if n.unknown and FT:KindVisible(n.kind) then
+                local d2 = Distance2(n, x, y)
+                if not IsCurrentTarget(n, target, d2) and (not nearestD2 or d2 < nearestD2) then
+                    nearestUnknown, nearestD2 = n, d2
+                end
+            end
+        end
         for _, n in ipairs(list) do
             local d2 = Distance2(n, x, y)
             -- O nó que já é alvo de interação ganha a placa grande; não duplica.
             local isTarget = IsCurrentTarget(n, target, d2)
             local confirmed = IsConfirmed(n)
             if d2 <= range2 and not isTarget and (confirmed or db.hudShowUnconfirmed)
-                and FT:KindVisible(n.kind) then
+                and FT:KindVisible(n.kind) and (not n.unknown or n == nearestUnknown) then
                 local sx, sy, depth = Project(n.x - x, n.y - y, (n.z and z) and (n.z - z) or 0, facing, W, H)
                 if sx then
                     used = used + 1
@@ -686,18 +712,11 @@ end
 
 -- Desconhecidos que perderam a confirmação (sumiram do minimapa, venceram
 -- ou a opção foi desligada) são apagados: não há posição real para guardar.
--- Também garante uma previsão só: sobra a mais recente.
 local function PruneUnknown()
-    local newest
-    for _, list in pairs(FT.db.nodes) do
-        for _, n in ipairs(list) do
-            if n.unknown and (not newest or (n.confirmedAt or 0) > (newest.confirmedAt or 0)) then newest = n end
-        end
-    end
     for _, list in pairs(FT.db.nodes) do
         for i = #list, 1, -1 do
             local n = list[i]
-            if n.unknown and (n ~= newest or not FT.db.trackUnknown or not IsConfirmed(n)) then
+            if n.unknown and (not FT.db.trackUnknown or not IsConfirmed(n)) then
                 table.remove(list, i)
             end
         end
