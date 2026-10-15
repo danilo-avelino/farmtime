@@ -109,6 +109,13 @@ sessão com o valor do que foi coletado (preços do Auctionator).
     `/ft clearnodes [all]`.
 - **Mostrar ervas / Mostrar minérios:** caixas no painel (`/ft herbs`, `/ft ores`)
   que escondem aquele tipo na placa, nos marcadores, na seta e no aviso "aperte F".
+- **Nós salvos voltam sozinhos:** depois da primeira coleta não precisa mais do
+  minimapa. 10 minutos depois da última coleta (tempo de renascer), o nó salvo
+  volta a aparecer com marcador e seta quando você está na área do minimapa. Como
+  addons não leem os pontos do minimapa, isso é uma suposição: o nó some de novo
+  por 10 minutos se o minimapa mostrar que ele não está lá (mouse em cima, sem
+  ponto) ou se você chegar no local e o jogo não achar a erva. Opção no painel
+  ou `/ft respawn`.
 - **Tutorial:** no primeiro login aparece uma janela de duas páginas explicando
   ervas/minérios (minimapa, marcador, seta, F) e a pesca com F. Para rever: botão
   "Tutorial" no painel ou `/ft tutorial`.

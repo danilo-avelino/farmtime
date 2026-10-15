@@ -1,5 +1,14 @@
 # Farm Time — Changelog
 
+## v1.14.0
+
+- **Saved nodes come back by themselves, no minimap needed.** After you gather a node once, you no longer have to hover the minimap to see it again.
+  - **When it shows:** 10 minutes after it was last gathered (respawn time), a saved node shows up again with its marker and the arrow whenever you are within the area the minimap covers.
+  - **How it gets hidden again:** addons can't read the minimap dots, so the node is assumed to have respawned. It is hidden again for 10 minutes if you hover its spot on the minimap and there is no dot, or if you walk to it and the game doesn't find the herb/ore within a few seconds (someone took it, or it spawned at another spot).
+  - **Confirmation:** hovering the minimap dot or getting close still confirms the node.
+  - **Option:** "Saved nodes come back by themselves (no minimap)" (on by default), or `/ft respawn`.
+- **Tutorial:** step 4 now describes this behavior.
+
 ## v1.13.1
 
 - **Arrow always goes to the nearest node.** Since v1.12.0, spotting a new unknown node on the minimap deleted every other unknown prediction, so the arrow could point to a far one while a closer node had been seen before.

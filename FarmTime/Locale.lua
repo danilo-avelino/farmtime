@@ -89,6 +89,7 @@ FT.Locales.enUS = {
         "/ft grey          - show/hide unavailable (grey) herbs and ores",
         "/ft unknown       - unknown nodes spotted on the minimap on/off",
         "/ft trackwarn     - warning when Find Herbs/Find Minerals is off",
+        "/ft respawn       - saved nodes come back by themselves after respawn time",
         "/ft tutorial      - show the tutorial again",
         "/ft arrow         - arrow to the nearest confirmed node on/off (drag to move)",
         "/ft arrowrange <yd> - arrow range (default 400)",
@@ -165,6 +166,8 @@ FT.Locales.enUS = {
     BTN_CALIBRATE   = "Calibrate",
     BTN_TUTORIAL    = "Tutorial",
     CFG_TRACKWARN   = "Warn when Find Herbs/Minerals is off",
+    CFG_RESPAWN     = "Saved nodes come back by themselves (no minimap)",
+    OPT_RESPAWN     = "saved nodes come back by themselves after respawn time",
     OPT_TRACKWARN   = "warning when Find Herbs/Find Minerals is off",
     TRACK_OFF_TITLE = "Herb/mineral tracking is off",
     TRACK_OFF_SUB   = "Turn on %s on the minimap so Farm Time can find nodes",
@@ -177,7 +180,7 @@ FT.Locales.enUS = {
     TUT_NODES_BODY  = "|cffffd1001.|r Turn on |cff33ff99Find Herbs|r or |cff33ff99Find Minerals|r on the minimap.\n" ..
         "|cffffd1002.|r |cffffffffHover the mouse over a yellow dot on the minimap.|r Farm Time marks that node on your screen (yellow, with \"?\") and the arrow points to it.\n" ..
         "|cffffd1003.|r Walk to it and press |cffffd100%s|r to gather.\n" ..
-        "|cffffd1004.|r After the first gather the node is |cff33ff99saved|r: Farm Time remembers where it is. When it respawns, a quick pass of the mouse over the minimap (no need to aim at the exact dot) or walking near it brings back its marker and the arrow.",
+        "|cffffd1004.|r After the first gather the node is |cff33ff99saved|r. From then on you don't need the minimap: when you are in the area again, its marker and the arrow show up by themselves (after the respawn time). If you get there and it isn't there, it is hidden until it respawns.",
     TUT_FISH_TITLE  = "Fishing with one key",
     TUT_FISH_BODY   = "|cffffd1001.|r Equip a |cff33ff99fishing pole|r.\n" ..
         "|cffffd1002.|r With nothing to interact with nearby, press |cffffd100%s|r: it |cffffffffcasts your line|r.\n" ..
@@ -279,6 +282,7 @@ FT.Locales.ptBR = {
         "/ft grey          - mostra/esconde ervas e minérios indisponíveis (cinza)",
         "/ft unknown       - liga/desliga nós desconhecidos vistos no minimapa",
         "/ft trackwarn     - aviso quando Find Herbs/Find Minerals está desligado",
+        "/ft respawn       - nós salvos voltam sozinhos depois do tempo de renascer",
         "/ft tutorial      - mostra o tutorial de novo",
         "/ft arrow         - liga/desliga a seta para o nó confirmado mais próximo (arraste para mover)",
         "/ft arrowrange <jd> - alcance da seta (padrão 400)",
@@ -352,6 +356,8 @@ FT.Locales.ptBR = {
     BTN_CALIBRATE   = "Calibrar",
     BTN_TUTORIAL    = "Tutorial",
     CFG_TRACKWARN   = "Avisar quando Achar Ervas/Minerais estiver desligado",
+    CFG_RESPAWN     = "Nós salvos voltam sozinhos (sem minimapa)",
+    OPT_RESPAWN     = "nós salvos voltam sozinhos depois do tempo de renascer",
     OPT_TRACKWARN   = "aviso quando Find Herbs/Find Minerals está desligado",
     TRACK_OFF_TITLE = "Rastreamento de ervas/minérios desligado",
     TRACK_OFF_SUB   = "Ative %s no minimapa para o Farm Time achar os nós",
@@ -364,7 +370,7 @@ FT.Locales.ptBR = {
     TUT_NODES_BODY  = "|cffffd1001.|r Ative |cff33ff99Find Herbs|r (Achar Ervas) ou |cff33ff99Find Minerals|r (Achar Minerais) no minimapa.\n" ..
         "|cffffd1002.|r |cffffffffPasse o mouse sobre o ponto amarelo no minimapa.|r O Farm Time marca esse nó na sua tela (amarelo, com \"?\") e a seta aponta para ele.\n" ..
         "|cffffd1003.|r Vá até ele e aperte |cffffd100%s|r para coletar.\n" ..
-        "|cffffd1004.|r Depois da primeira coleta o nó fica |cff33ff99salvo|r: o Farm Time lembra onde ele fica. Quando ele nascer de novo, uma passada rápida do mouse no minimapa (sem precisar mirar no ponto exato) ou chegar perto dele traz de volta o marcador e a seta.",
+        "|cffffd1004.|r Depois da primeira coleta o nó fica |cff33ff99salvo|r. A partir daí não precisa mais do minimapa: quando você estiver na área de novo, o marcador e a seta aparecem sozinhos (depois do tempo de renascer). Se chegar lá e ele não estiver, ele some até renascer.",
     TUT_FISH_TITLE  = "Pescando com uma tecla",
     TUT_FISH_BODY   = "|cffffd1001.|r Equipe uma |cff33ff99vara de pescar|r.\n" ..
         "|cffffd1002.|r Sem nada para interagir por perto, aperte |cffffd100%s|r: ela |cfffffffflança a isca|r.\n" ..

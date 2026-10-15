@@ -37,6 +37,7 @@ local CONFIRM_TTL      = 300  -- segundos que uma confirmação vale
 local HEAD_HEIGHT      = 2    -- jardas: a câmera mira mais ou menos a cabeça do personagem
 
 local COLORS = FT.Style.COLORS
+local InMinimapArea -- definida mais abaixo
 
 -- Diâmetro (jardas) da área mostrada no minimapa em cada nível de zoom.
 local MINIMAP_YARDS = {
@@ -196,6 +197,24 @@ local function IsConfirmed(node)
     return time() - node.confirmedAt < CONFIRM_TTL
 end
 
+-- Nó salvo que provavelmente já nasceu de novo: addons não conseguem ler os
+-- pontos do minimapa, então, depois do tempo de renascer, um nó salvo volta a
+-- aparecer sozinho quando você está na área do minimapa. Sai de novo se o
+-- minimapa mostrar que ele não está lá (mouse em cima, sem ponto) ou se você
+-- chegar no local e o jogo não achar a erva/minério.
+local RESPAWN_TIME = 600 -- segundos
+local function IsPresumed(n)
+    if n.unknown or not FT.db.presumeRespawn then return false end
+    local now = time()
+    if n.gatheredAt and now - n.gatheredAt < RESPAWN_TIME then return false end
+    if n.missingAt and now - n.missingAt < RESPAWN_TIME then return false end
+    return true
+end
+
+local function IsAvailable(n)
+    return IsConfirmed(n) or IsPresumed(n)
+end
+
 -- grace: segundos após a coleta em que o nó NÃO pode ser reconfirmado
 -- (o objeto ainda existe enquanto o saque está aberto e o ponto do minimapa
 -- demora um pouco para sumir).
@@ -209,7 +228,7 @@ local function Confirm(name, x, y, inst, tolerance, grace)
     local node = FindNode(list, name, x, y, tolerance, "known") or FindNode(list, name, x, y, tolerance, "unknown")
     if not node then return end
     if grace and node.gatheredAt and time() - node.gatheredAt < grace then return node end
-    node.missSince = nil
+    node.missSince, node.missingAt = nil, nil
     if FT.db.debug and not IsConfirmed(node) then
         FT:Print(string.format(FT.L.NODE_CONFIRMED, node.name))
     end
@@ -384,10 +403,10 @@ local function ScanMinimapTooltip()
     if not list then return end
     local near = math.max(6, MISS_PIXELS * perPixel)
     for _, n in ipairs(list) do
-        if n.confirmedAt and not names[n.name] and Distance2(n, x, y) <= near * near then
+        if IsAvailable(n) and not names[n.name] and Distance2(n, x, y) <= near * near then
             n.missSince = n.missSince or GetTime()
             if GetTime() - n.missSince >= MISS_TIME then
-                n.confirmedAt, n.missSince = nil, nil
+                n.confirmedAt, n.missSince, n.missingAt = nil, nil, time()
                 if FT.db.debug then FT:Print(string.format(FT.L.NODE_MISSING, n.name)) end
             end
         elseif n.missSince and names[n.name] then
@@ -549,6 +568,45 @@ end)
 -- O nó já está visível como alvo de interação (com a placa grande)? Então
 -- não desenha marcador nem seta para ele. Um desconhecido com o mesmo nome por
 -- perto é essa mesma erva com a posição estimada: some também.
+-- Um nó presumido (não confirmado) só conta dentro da área que o minimapa
+-- mostra; confirmados contam em qualquer distância.
+local function MinimapRadius()
+    local indoors = IsIndoors and IsIndoors()
+    local ok, zoom = pcall(Minimap.GetZoom, Minimap)
+    local yards = (indoors and MINIMAP_YARDS.indoor or MINIMAP_YARDS.outdoor)[ok and zoom or 0]
+    return (yards or 466) / 2
+end
+
+function InMinimapArea(n, d2)
+    if IsConfirmed(n) then return true end
+    local r = MinimapRadius()
+    return d2 <= r * r
+end
+
+-- Chegou no local de um nó presumido e o jogo não escolheu a erva/minério
+-- como alvo de interação em alguns segundos: não está lá (alguém coletou ou o
+-- nó nasceu em outro ponto). Some até o próximo tempo de renascer.
+local ARRIVE_DISTANCE = 8
+local ARRIVE_TIME     = 4
+local function CheckArrival(list, x, y)
+    for _, n in ipairs(list) do
+        if not n.unknown and not IsConfirmed(n) and IsPresumed(n)
+            and Distance2(n, x, y) <= ARRIVE_DISTANCE * ARRIVE_DISTANCE then
+            if FT.currentTargetName == n.name then
+                n.arriveSince = nil
+            else
+                n.arriveSince = n.arriveSince or GetTime()
+                if GetTime() - n.arriveSince >= ARRIVE_TIME then
+                    n.arriveSince, n.missingAt = nil, time()
+                    if FT.db.debug then FT:Print(string.format(FT.L.NODE_MISSING, n.name)) end
+                end
+            end
+        elseif n.arriveSince then
+            n.arriveSince = nil
+        end
+    end
+end
+
 local SEEN_RADIUS = 60
 local function IsCurrentTarget(n, target, d2)
     if not (target and n.name == target) then return false end
@@ -567,7 +625,7 @@ local function UpdateArrow(list, x, y, facing)
             local isTarget = IsCurrentTarget(n, target, d2)
             -- A seta só aponta para nós DISPONÍVEIS (confirmados), mesmo com a
             -- opção de mostrar os indisponíveis ligada.
-            if d2 <= maxD2 and not isTarget and IsConfirmed(n) and FT:KindVisible(n.kind)
+            if d2 <= maxD2 and not isTarget and IsAvailable(n) and InMinimapArea(n, d2) and FT:KindVisible(n.kind)
                 and (not bestD2 or d2 < bestD2) then
                 best, bestD2 = n, d2
             end
@@ -585,7 +643,7 @@ local function UpdateArrow(list, x, y, facing)
     local rows = ARROW_FRAMES / ARROW_COLS
     arrow.tex:SetTexCoord(col / ARROW_COLS, (col + 1) / ARROW_COLS, row / rows, (row + 1) / rows)
 
-    local confirmed = IsConfirmed(best)
+    local confirmed = IsAvailable(best)
     local color = best.unknown and COLORS.unknown or COLORS[best.kind] or COLORS.herb
     local c = confirmed and color or COLORS.grey
     arrow.tex:SetVertexColor(c[1], c[2], c[3])
@@ -648,6 +706,7 @@ local function UpdateMarkers()
     if list and sinceCorrect >= 0.2 then
         sinceCorrect = 0
         pcall(CorrectUnknown, list, x, y, facing)
+        pcall(CheckArrival, list, x, y)
     end
 
     if list and db.hudEnabled then
@@ -668,7 +727,7 @@ local function UpdateMarkers()
             local d2 = Distance2(n, x, y)
             -- O nó que já é alvo de interação ganha a placa grande; não duplica.
             local isTarget = IsCurrentTarget(n, target, d2)
-            local confirmed = IsConfirmed(n)
+            local confirmed = IsAvailable(n) and InMinimapArea(n, d2)
             if d2 <= range2 and not isTarget and (confirmed or db.hudShowUnconfirmed)
                 and FT:KindVisible(n.kind) and (not n.unknown or n == nearestUnknown) then
                 local sx, sy, depth = Project(n.x - x, n.y - y, (n.z and z) and (n.z - z) or 0, facing, W, H)
