@@ -1,5 +1,13 @@
 # Farm Time — Changelog
 
+## v1.10.1
+
+- **Fixed: the same herb/ore showed up twice** (a saved grey node plus a yellow "unknown" one next to it).
+  - **Cause:** the minimap tracking dot is several pixels wide and its tooltip shows with the cursor anywhere over it. Zoomed out, that is tens of yards of error, so the cursor position missed the saved node and a duplicate was created.
+  - **Fix:** the match tolerance now grows with the minimap zoom (about 40 yards fully zoomed out). A saved node always wins over an unknown one, and confirming a saved node removes unknown duplicates around it.
+  - **Gathering:** gathering a herb/ore also removes unknown nodes with the same name within 45 yards.
+  - **Position:** an unknown node's position is now the average of every cursor position over the dot. Sweeping the mouse across the dot puts it at the center.
+
 ## v1.10.0
 
 - **New: loot alert.** With fast loot the loot window barely shows, so every looted item of **uncommon (green) quality or better** now shows the same achievement-style alert as fish, titled "Item looted!".

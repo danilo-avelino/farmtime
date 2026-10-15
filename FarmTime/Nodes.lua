@@ -23,6 +23,12 @@ local _, FT = ...
 
 local MERGE_DISTANCE   = 12   -- jardas: mesmo nome a menos disso = mesmo nó
 local CONFIRM_DISTANCE = 25   -- jardas: tolerância ao confirmar pelo minimapa
+-- O ponto de rastreamento ocupa vários pixels do minimapa e o tooltip aparece
+-- com o cursor em qualquer parte dele: com o minimapa afastado, isso dá dezenas
+-- de jardas de erro. A tolerância cresce com o zoom (pixels do ponto x jardas
+-- por pixel).
+local DOT_PIXELS       = 12
+local UNKNOWN_MERGE    = 45   -- jardas: ao coletar, desconhecidos do mesmo nome até aqui são o mesmo nó
 local CONFIRM_TTL      = 300  -- segundos que uma confirmação vale
 local HEAD_HEIGHT      = 2    -- jardas: a câmera mira mais ou menos a cabeça do personagem
 
@@ -108,10 +114,11 @@ local function NodesHere(instanceID, create)
     return list
 end
 
-local function FindNode(list, name, x, y, maxDist, onlyUnknown)
+-- which: nil = qualquer nó, "known" = só salvos, "unknown" = só desconhecidos.
+local function FindNode(list, name, x, y, maxDist, which)
     local best, bestD2 = nil, maxDist * maxDist
     for _, n in ipairs(list) do
-        if n.name == name and (not onlyUnknown or n.unknown) then
+        if n.name == name and (not which or (which == "unknown") == (n.unknown == true)) then
             local d2 = Distance2(n, x, y)
             if d2 <= bestD2 then best, bestD2 = n, d2 end
         end
@@ -127,8 +134,8 @@ function FT:RecordNode(kind, name)
     local x, y, z, inst = PlayerPosition()
     if not x then return end
     local list = NodesHere(inst, true)
-    local node = FindNode(list, name, x, y, MERGE_DISTANCE)
-        or FindNode(list, name, x, y, CONFIRM_DISTANCE, true)
+    local node = FindNode(list, name, x, y, MERGE_DISTANCE, "known")
+        or FindNode(list, name, x, y, UNKNOWN_MERGE, "unknown")
     if node and node.unknown then
         -- Desconhecido (posição aproximada do minimapa): passa a valer a sua.
         node.x, node.y, node.z = x, y, z
@@ -146,6 +153,14 @@ function FT:RecordNode(kind, name)
     node.gatheredAt = time()
     node.confirmedAt = nil
     self.lastRecordAt = GetTime()
+    -- Outros desconhecidos com este nome por perto eram esta mesma erva vista
+    -- no minimapa com a posição errada: apaga.
+    for i = #list, 1, -1 do
+        local n = list[i]
+        if n ~= node and n.unknown and n.name == name and Distance2(n, x, y) <= UNKNOWN_MERGE * UNKNOWN_MERGE then
+            table.remove(list, i)
+        end
+    end
     if self.ShareNode then self:ShareNode("G", node, inst) end
 end
 
@@ -186,7 +201,8 @@ local GRACE_MINIMAP = 15
 local function Confirm(name, x, y, inst, tolerance, grace)
     local list = NodesHere(inst)
     if not list then return end
-    local node = FindNode(list, name, x, y, tolerance)
+    -- Um nó salvo tem preferência sobre um desconhecido do mesmo nome.
+    local node = FindNode(list, name, x, y, tolerance, "known") or FindNode(list, name, x, y, tolerance, "unknown")
     if not node then return end
     if grace and node.gatheredAt and time() - node.gatheredAt < grace then return node end
     node.missSince = nil
@@ -205,7 +221,7 @@ end
 local function AddUnknown(name, kind, x, y, inst)
     local list = NodesHere(inst, true)
     table.insert(list, { x = x, y = y, name = name, kind = kind, count = 0,
-        unknown = true, confirmedAt = time() })
+        unknown = true, samples = 1, confirmedAt = time() })
     if FT.db.debug then FT:Print(string.format(FT.L.NODE_UNKNOWN_FOUND, name)) end
 end
 
@@ -295,6 +311,7 @@ local function ScanMinimapTooltip()
     if focus and focus ~= Minimap then return end
     local x, y, inst, perPixel = CursorWorldPosition()
     if not x then return end
+    local dotRadius = math.max(CONFIRM_DISTANCE, DOT_PIXELS * perPixel)
 
     local names = {}
     if GameTooltip:IsShown() then
@@ -306,10 +323,24 @@ local function ScanMinimapTooltip()
                     local name = line:match("^%s*(.-)%s*$")
                     if name ~= "" then
                         names[name] = true
-                        local node = Confirm(name, x, y, inst, CONFIRM_DISTANCE, GRACE_MINIMAP)
+                        local node = Confirm(name, x, y, inst, dotRadius, GRACE_MINIMAP)
                         if node and node.unknown then
-                            -- Cada passada do mouse refina a posição aproximada.
-                            node.x, node.y = (node.x + x) / 2, (node.y + y) / 2
+                            -- Cada posição do cursor sobre o ponto entra na média:
+                            -- passando o mouse pelo ponto todo, a média cai no centro.
+                            local k = math.min(node.samples or 1, 30)
+                            node.x = (node.x * k + x) / (k + 1)
+                            node.y = (node.y * k + y) / (k + 1)
+                            node.samples = k + 1
+                        elseif node then
+                            -- Nó salvo confirmado: desconhecidos com o mesmo nome
+                            -- ali perto eram ele, visto com a posição errada.
+                            local list = NodesHere(inst)
+                            for i = #list, 1, -1 do
+                                local n = list[i]
+                                if n.unknown and n.name == name and Distance2(n, node.x, node.y) <= dotRadius * dotRadius then
+                                    table.remove(list, i)
+                                end
+                            end
                         elseif not node and FT.db.trackUnknown then
                             local kind = FT:Classify(name)
                             if kind == "herb" or kind == "ore" then AddUnknown(name, kind, x, y, inst) end
