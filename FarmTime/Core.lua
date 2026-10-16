@@ -276,6 +276,10 @@ commands.status = function()
         local okp, text = pcall(FT.PositionStatus, FT)
         print("  HUD: " .. tostring(text))
     end
+    if FT.ApiStatus then
+        local oka, text = pcall(FT.ApiStatus, FT)
+        print("  API: " .. tostring(text))
+    end
     if FT.missingEvents then
         print("  " .. FT.L.STATUS_MISSING .. ": " .. table.concat(FT.missingEvents, ", "))
     end

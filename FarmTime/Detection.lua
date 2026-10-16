@@ -60,6 +60,35 @@ function FT:GetNodeIcon(name)
 end
 
 local known = {}
+-- ID do objeto (o número dentro do GUID "GameObject-0-...-ID-...") -> nome.
+-- Reserva para quando o cliente esconde o nome do alvo de interação (valores
+-- "secretos" da API nova): o GUID ainda diz que objeto é.
+FT.OBJECT_NAMES = {
+    [1617] = "Silverleaf", [1618] = "Peacebloom", [1619] = "Earthroot", [1620] = "Mageroyal",
+    [1621] = "Briarthorn", [1622] = "Bruiseweed", [1623] = "Wild Steelbloom", [1624] = "Kingsblood",
+    [1625] = "Liferoot", [1628] = "Grave Moss", [2041] = "Liferoot", [2042] = "Fadeleaf",
+    [2043] = "Khadgar's Whisker", [2044] = "Wintersbite", [2045] = "Stranglekelp", [2046] = "Goldthorn",
+    [2866] = "Firebloom", [3724] = "Peacebloom", [3725] = "Silverleaf", [3726] = "Earthroot",
+    [3727] = "Mageroyal", [3729] = "Briarthorn", [3730] = "Bruiseweed",
+    [142140] = "Purple Lotus", [142141] = "Arthas' Tears", [142142] = "Sungrass", [142143] = "Blindweed",
+    [142144] = "Ghost Mushroom", [142145] = "Gromsblood", [176583] = "Golden Sansam", [176584] = "Dreamfoil",
+    [176586] = "Mountain Silversage", [176587] = "Plaguebloom", [176588] = "Icecap", [176589] = "Black Lotus",
+    [1731] = "Copper Vein", [1732] = "Tin Vein", [1733] = "Silver Vein", [1734] = "Gold Vein",
+    [1735] = "Iron Deposit", [2040] = "Mithril Deposit", [2047] = "Truesilver Deposit",
+    [2653] = "Lesser Bloodstone Deposit", [1610] = "Incendicite Mineral Vein", [19903] = "Indurium Mineral Vein",
+    [165658] = "Dark Iron Deposit", [324] = "Small Thorium Vein", [175404] = "Rich Thorium Vein",
+    [3763] = "Copper Vein", [3764] = "Tin Vein", [103713] = "Copper Vein", [103711] = "Silver Vein",
+    [73940] = "Ooze Covered Silver Vein", [73941] = "Ooze Covered Gold Vein",
+    [123308] = "Ooze Covered Mithril Deposit", [123309] = "Ooze Covered Truesilver Deposit",
+    [123310] = "Ooze Covered Rich Thorium Vein", [177388] = "Ooze Covered Thorium Vein",
+}
+
+function FT:NameFromGUID(guid)
+    if type(guid) ~= "string" or (issecretvalue and issecretvalue(guid)) then return nil end
+    local id = tonumber(guid:match("^GameObject%-%d+%-%d+%-%d+%-%d+%-(%d+)%-"))
+    return id and self.OBJECT_NAMES[id]
+end
+
 for _, n in ipairs(HERBS) do known[n] = "herb" end
 for _, n in ipairs(ORES) do known[n] = "ore" end
 

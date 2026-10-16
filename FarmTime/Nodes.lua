@@ -783,14 +783,24 @@ local function PruneUnknown()
 end
 
 local sincePrune = 0
+-- Erros aqui não podem passar em silêncio (o jogo costuma esconder erros de
+-- Lua): o primeiro de cada sessão vai para o chat e fica no /ft status.
+local reported = false
 C_Timer.NewTicker(0.05, function()
     if not FT.db then return end
     sincePrune = sincePrune + 0.05
     if sincePrune >= 1 then
         sincePrune = 0
-        PruneUnknown()
+        pcall(PruneUnknown)
     end
-    UpdateMarkers()
+    local ok, err = pcall(UpdateMarkers)
+    if not ok then
+        FT.lastHudError = tostring(err)
+        if not reported then
+            reported = true
+            FT:Print(string.format(FT.L.EVENT_ERROR, "HUD", FT.lastHudError))
+        end
+    end
 end)
 
 ---------------------------------------------------------------------------
@@ -816,6 +826,29 @@ function FT:ClearNodes(all)
 end
 
 -- Diagnóstico para /ft status.
+-- Diagnóstico das APIs que o HUD usa: ok / secret (bloqueado pelo cliente) / nil.
+local function Probe(fn, ...)
+    if not fn then return "missing" end
+    local ok, a, b = pcall(fn, ...)
+    if not ok then return "error" end
+    if a == nil then return "nil" end
+    if (issecretvalue and (issecretvalue(a) or (b ~= nil and issecretvalue(b)))) then return "secret" end
+    return "ok"
+end
+
+function FT:ApiStatus()
+    local mapID = C_Map and C_Map.GetBestMapForUnit and select(2, pcall(C_Map.GetBestMapForUnit, "player"))
+    return string.format("UnitPosition=%s Map=%s MapPos=%s Facing=%s softGUID=%s softName=%s plate=%s err=%s",
+        Probe(UnitPosition, "player"),
+        Probe(C_Map and C_Map.GetBestMapForUnit, "player"),
+        (type(mapID) == "number" and not (issecretvalue and issecretvalue(mapID)))
+            and Probe(C_Map.GetPlayerMapPosition, mapID, "player") or "n/a",
+        Probe(GetPlayerFacing),
+        Probe(UnitGUID, "softinteract"), Probe(UnitName, "softinteract"),
+        Probe(C_NamePlate and C_NamePlate.GetNamePlateForUnit, "softinteract"),
+        tostring(self.lastHudError or "-"))
+end
+
 function FT:PositionStatus()
     local x, y, z, inst = PlayerPosition()
     local facing = PlayerFacing(x, y)

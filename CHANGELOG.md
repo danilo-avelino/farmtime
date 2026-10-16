@@ -1,5 +1,12 @@
 # Farm Time — Changelog
 
+## v1.15.2
+
+- **Game update fixes:**
+  - **Node name fallback:** if the client hides the interact target's name (restricted "secret" values in the new API), the herb/ore is now identified by the object ID inside its GUID.
+  - **Visible HUD errors:** errors in the arrow/marker update are no longer silent. The first one each session is printed in chat.
+  - **Diagnostics:** `/ft status` has a new "API" line showing which game functions the HUD depends on are ok, blocked (secret) or missing.
+
 ## v1.15.1
 
 - **Game update:** the TOC now also declares the next WoW Forever interface numbers (1.60.2–1.60.5, 1.61.0–1.61.3 and 1.62.0), so the addon isn't flagged "out of date" after a client patch.

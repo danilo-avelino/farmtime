@@ -95,7 +95,7 @@ function FT:GetInteractPlate() return GetInteractPlate() end
 function FT:GetInteractTarget()
     local guid = Safe(UnitGUID, UNIT) or eventGUID
     if not guid then return nil end
-    local name = Safe(UnitName, UNIT)
+    local name = Safe(UnitName, UNIT) or self:NameFromGUID(guid)
     return guid, name, self:Classify(name)
 end
 
