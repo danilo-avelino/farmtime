@@ -1,5 +1,9 @@
 # Farm Time — Changelog
 
+## v1.15.1
+
+- **Game update:** the TOC now also declares the next WoW Forever interface numbers (1.60.2–1.60.5, 1.61.0–1.61.3 and 1.62.0), so the addon isn't flagged "out of date" after a client patch.
+
 ## v1.15.0
 
 - **New: gold dashboard.** Clicking the minimap icon (or typing `/ft`) now opens a dashboard instead of the settings.

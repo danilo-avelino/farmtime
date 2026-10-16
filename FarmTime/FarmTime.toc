@@ -1,10 +1,10 @@
-## Interface: 16001, 11509
+## Interface: 16001, 16002, 16003, 16004, 16005, 16100, 16101, 16102, 16103, 16200, 11509, 11508
 ## OptionalDeps: Auctionator
 ## Title: Farm Time
 ## Notes: Highlights the herb/ore in front of you, F to gather, fast loot and a session window with Auctionator prices.
 ## Notes-ptBR: Destaca a erva/minério à frente, coleta com F, fast loot e janela da sessão com preços do Auctionator.
 ## Author: Danilo Avelino
-## Version: 1.15.0
+## Version: 1.15.1
 ## SavedVariables: FarmTimeDB
 ## IconTexture: Interface\Icons\INV_Misc_Flower_02
 
