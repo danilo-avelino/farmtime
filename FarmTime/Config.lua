@@ -193,6 +193,10 @@ function FT:ToggleConfig()
     panel:SetShown(not panel:IsShown())
 end
 
+function FT:ShowConfig()
+    panel:Show()
+end
+
 ---------------------------------------------------------------------------
 -- Botão do minimapa (arrastável pela borda)
 ---------------------------------------------------------------------------

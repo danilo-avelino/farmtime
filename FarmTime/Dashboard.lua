@@ -192,9 +192,10 @@ local function BottomButton(key, onClick, anchor)
     b:SetScript("OnClick", onClick)
     return b
 end
-f.configBtn = BottomButton("BTN_SETTINGS", function() FT:ToggleConfig() end)
+-- Configurações e Tutorial trocam de tela: o painel fecha.
+f.configBtn = BottomButton("BTN_SETTINGS", function() f:Hide(); FT:ShowConfig() end)
 f.sessionBtn = BottomButton("BTN_SESSION", function() FT:ToggleSessionWindow() end, f.configBtn)
-f.tutorialBtn = BottomButton("BTN_TUTORIAL", function() FT:ShowTutorial() end, f.sessionBtn)
+f.tutorialBtn = BottomButton("BTN_TUTORIAL", function() f:Hide(); FT:ShowTutorial() end, f.sessionBtn)
 
 f.note = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
 f.note:SetPoint("BOTTOMRIGHT", -20, 20)

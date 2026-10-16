@@ -650,9 +650,11 @@ local function UpdateArrow(list, x, y, facing)
     local dist = string.format(FT.L.HUD_DISTANCE, math.floor(sqrt(bestD2) + 0.5))
     arrow.plate:SetContent(FT:GetNodeIcon(best.name) or "Interface\\Icons\\INV_Misc_QuestionMark",
         best.unknown and ("? " .. best.name) or best.name,
-        best.unknown and (FT.L.NODE_UNKNOWN .. " - " .. dist) or dist,
+        best.unknown and (FT.L.NODE_UNKNOWN .. " - " .. dist)
+            or (not IsConfirmed(best) and (FT.L.NODE_PRESUMED .. " - " .. dist)) or dist,
         color, 24, not confirmed)
-    arrow.plate:SetAlpha(1)
+    -- Presumido (renasceu pelo tempo, sem confirmação do minimapa): mais apagado.
+    arrow.plate:SetAlpha(IsConfirmed(best) and 1 or 0.75)
     arrow:Show()
 end
 
@@ -738,8 +740,9 @@ local function UpdateMarkers()
                     m.icon:SetVertexColor(1, 1, 1)
                     local dist = string.format(FT.L.HUD_DISTANCE, math.floor(sqrt(d2) + 0.5))
                     m:SetContent(FT:GetNodeIcon(n.name) or "Interface\\Icons\\INV_Misc_QuestionMark",
-                        n.unknown and ("? " .. dist) or dist, nil,
+                        n.unknown and ("? " .. dist) or (confirmed and not IsConfirmed(n) and ("~ " .. dist)) or dist, nil,
                         n.unknown and COLORS.unknown or COLORS[n.kind] or COLORS.herb, size, not confirmed)
+                    if confirmed and not IsConfirmed(n) then m:SetAlpha(0.75) end
                     PlaceMarker(m, sx, sy, size)
                     m:Show()
                 end

@@ -1,5 +1,10 @@
 # Farm Time — Changelog
 
+## v1.15.4
+
+- **Dashboard:** the "Settings" and "Tutorial" buttons now close the dashboard when they open their window.
+- **Presumed nodes are marked as such:** saved nodes shown only because their respawn time has passed (not confirmed on the minimap) are now drawn slightly faded. Their marker shows "~ 43 yd" and the arrow shows "Likely respawned - 43 yd", so they are no longer confused with confirmed nodes. Hovering the minimap dot (or getting close) turns them into confirmed nodes. `/ft respawn` turns presumed nodes off.
+
 ## v1.15.3
 
 - **`/ft status`:** now warns in red when "Show herbs", "Show ores", the arrow or the whole addon is turned off. Those options hide plates, markers and the arrow, and are easy to uncheck without noticing.
