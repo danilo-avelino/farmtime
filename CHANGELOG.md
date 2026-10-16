@@ -1,5 +1,9 @@
 # Farm Time — Changelog
 
+## v1.15.3
+
+- **`/ft status`:** now warns in red when "Show herbs", "Show ores", the arrow or the whole addon is turned off. Those options hide plates, markers and the arrow, and are easy to uncheck without noticing.
+
 ## v1.15.2
 
 - **Game update fixes:**

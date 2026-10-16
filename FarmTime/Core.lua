@@ -280,6 +280,11 @@ commands.status = function()
         local oka, text = pcall(FT.ApiStatus, FT)
         print("  API: " .. tostring(text))
     end
+    -- Opções que escondem tudo de um tipo: fácil de desmarcar sem perceber.
+    for _, opt in ipairs({ { "showHerbs", "STATUS_HERBS_OFF" }, { "showOres", "STATUS_ORES_OFF" },
+        { "enabled", "STATUS_DISABLED" }, { "arrowEnabled", "STATUS_ARROW_OFF" } }) do
+        if not FT.db[opt[1]] then print("  |cffff5555" .. FT.L[opt[2]] .. "|r") end
+    end
     if FT.missingEvents then
         print("  " .. FT.L.STATUS_MISSING .. ": " .. table.concat(FT.missingEvents, ", "))
     end
