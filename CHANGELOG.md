@@ -1,5 +1,9 @@
 # Farm Time — Changelog
 
+## v1.15.5
+
+- **Confirmation without the minimap, from farther away:** when the game picks a herb/ore as your interact target (up to the "Range" setting, 30 yards by default), the nearest saved node with that name within that range is confirmed. Before, you had to be within 12 yards of the saved spot.
+
 ## v1.15.4
 
 - **Dashboard:** the "Settings" and "Tutorial" buttons now close the dashboard when they open their window.

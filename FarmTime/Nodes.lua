@@ -292,10 +292,14 @@ function FT:ApplySharedNode(code, inst, x, y, kind, name)
     end
 end
 
--- a) Alvo de interação do jogo (você está perto do nó).
+-- a) Alvo de interação do jogo: o jogo achou essa erva/minério na sua frente,
+--    a até "Alcance" jardas (SoftTargetInteractRange). Confirma o nó salvo com
+--    esse nome mais perto de você dentro desse alcance, sem passar o mouse no
+--    minimapa.
 function FT:ConfirmNodeNearPlayer(name)
     local x, y, _, inst = PlayerPosition()
-    if x and name then Confirm(name, x, y, inst, MERGE_DISTANCE, GRACE_NEAR) end
+    local reach = math.max(MERGE_DISTANCE, (self.db.interactRange or 30) + 5)
+    if x and name then Confirm(name, x, y, inst, reach, GRACE_NEAR) end
 end
 
 -- b) Tooltip do minimapa: posição do cursor no minimapa -> posição no mundo.
