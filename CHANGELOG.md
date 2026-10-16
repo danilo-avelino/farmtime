@@ -1,5 +1,15 @@
 # Farm Time — Changelog
 
+## v1.15.0
+
+- **New: gold dashboard.** Clicking the minimap icon (or typing `/ft`) now opens a dashboard instead of the settings.
+  - **Summary:** gold earned, gold spent and net for the month, plus today's net (or the best day, for past months).
+  - **Chart:** one column per day. Earned goes up in blue and spent goes down in red from the zero line. Hover a day to see its earned, spent and net amounts.
+  - **Filters:** `<` and `>` switch months, and "All characters" adds up every character on the account.
+  - **Data:** every gold change while you play is saved inside the addon (SavedVariables), per character and per day. That includes loot, vendor, mail, auction house, repairs, training and trades. Changes made while logged out are not counted.
+  - **Buttons:** Settings, Session and Tutorial at the bottom.
+- **Settings:** now open from the dashboard's "Settings" button or `/ft config`. Right-click on the minimap icon still turns the addon on/off.
+
 ## v1.14.0
 
 - **Saved nodes come back by themselves, no minimap needed.** After you gather a node once, you no longer have to hover the minimap to see it again.

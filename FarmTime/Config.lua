@@ -253,7 +253,7 @@ local function CreateOwnButton()
             FT:SetOption("enabled", not FT.db.enabled)
             FT:Print(FT.db.enabled and FT.L.ENABLED or FT.L.DISABLED)
         else
-            FT:ToggleConfig()
+            FT:ToggleDashboard()
         end
     end)
 
@@ -283,7 +283,7 @@ local function OnClick(_, mouse)
         FT:SetOption("enabled", not FT.db.enabled)
         FT:Print(FT.db.enabled and FT.L.ENABLED or FT.L.DISABLED)
     else
-        FT:ToggleConfig()
+        FT:ToggleDashboard()
     end
 end
 

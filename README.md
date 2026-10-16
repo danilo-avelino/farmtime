@@ -116,6 +116,12 @@ sessão com o valor do que foi coletado (preços do Auctionator).
   por 10 minutos se o minimapa mostrar que ele não está lá (mouse em cima, sem
   ponto) ou se você chegar no local e o jogo não achar a erva. Opção no painel
   ou `/ft respawn`.
+- **Painel de ouro:** o clique no ícone do minimapa (ou `/ft`) abre um painel com o
+  ouro ganho e gasto por dia, filtro por mês (`<` `>`) e opção "Todos os
+  personagens". Mostra ganho, gasto e saldo do mês e o saldo de hoje, além de um
+  gráfico por dia (ganho para cima em azul, gasto para baixo em vermelho; passe o
+  mouse para ver os valores). Os dados ficam salvos no próprio addon, por
+  personagem e por dia. Botões para Configurações (`/ft config`), Sessão e Tutorial.
 - **Tutorial:** no primeiro login aparece uma janela de duas páginas explicando
   ervas/minérios (minimapa, marcador, seta, F) e a pesca com F. Para rever: botão
   "Tutorial" no painel ou `/ft tutorial`.
@@ -162,6 +168,8 @@ sessão com o valor do que foi coletado (preços do Auctionator).
 | `Loot.lua` | Fast loot e registro do que foi saqueado de coletas e dos materiais de profissão |
 | `Session.lua` | Janela da sessão: itens, valores do Auctionator, total, timer e reset |
 | `Media/Arrow3D.tga` | Seta 3D pré-renderizada: 64 ângulos numa folha 8x8 (branca, tingida pela cor do recurso); gerada por `tools/render_arrow3d.py` |
+| `Gold.lua` | Registro de ouro ganho/gasto por dia e personagem (FarmTimeDB.gold) |
+| `Dashboard.lua` | Painel inicial: resumo e gráfico do ouro por dia, filtro por mês |
 | `Tracking.lua` | Aviso quando Find Herbs/Find Minerals está desligado |
 | `Tutorial.lua` | Janela de tutorial (primeiro login, botão no painel, `/ft tutorial`) |
 | `Config.lua` | Painel de configurações e botão do minimapa (sem bibliotecas externas) |

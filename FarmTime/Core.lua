@@ -184,8 +184,9 @@ local function Number(key, labelKey, lo, hi)
     end
 end
 
-commands[""]    = function() FT:ToggleConfig() end
-commands.config = commands[""]
+commands[""]    = function() FT:ToggleDashboard() end
+commands.config = function() FT:ToggleConfig() end
+commands.dash   = commands[""]
 commands.toggle = Toggle("enabled", "OPT_HIGHLIGHT")
 commands.size   = Number("iconSize", "OPT_ICON_SIZE", 16, 96)
 commands.range  = Number("interactRange", "OPT_RANGE", 5, 60)
