@@ -200,7 +200,7 @@ FT.Locales.enUS = {
     TUT_NODES_BODY  = "|cffffd1001.|r Turn on |cff33ff99Find Herbs|r or |cff33ff99Find Minerals|r on the minimap.\n" ..
         "|cffffd1002.|r |cffffffffHover the mouse over a yellow dot on the minimap.|r Farm Time marks that node on your screen (yellow, with \"?\") and the arrow points to it.\n" ..
         "|cffffd1003.|r Walk to it and press |cffffd100%s|r to gather.\n" ..
-        "|cffffd1004.|r After the first gather the node is |cff33ff99saved|r. From then on you don't need the minimap: when you are in the area again, its marker and the arrow show up by themselves (after the respawn time). If you get there and it isn't there, it is hidden until it respawns.",
+        "|cffffd1004.|r After the first gather the node is |cff33ff99saved|r: Farm Time knows where it is. When it respawns, a quick pass of the mouse over the minimap (no need to aim at the exact dot) or the game targeting it brings back its marker and the arrow. Only nodes that really exist are shown.",
     TUT_FISH_TITLE  = "Fishing with one key",
     TUT_FISH_BODY   = "|cffffd1001.|r Equip a |cff33ff99fishing pole|r.\n" ..
         "|cffffd1002.|r With nothing to interact with nearby, press |cffffd100%s|r: it |cffffffffcasts your line|r.\n" ..
@@ -410,7 +410,7 @@ FT.Locales.ptBR = {
     TUT_NODES_BODY  = "|cffffd1001.|r Ative |cff33ff99Find Herbs|r (Achar Ervas) ou |cff33ff99Find Minerals|r (Achar Minerais) no minimapa.\n" ..
         "|cffffd1002.|r |cffffffffPasse o mouse sobre o ponto amarelo no minimapa.|r O Farm Time marca esse nó na sua tela (amarelo, com \"?\") e a seta aponta para ele.\n" ..
         "|cffffd1003.|r Vá até ele e aperte |cffffd100%s|r para coletar.\n" ..
-        "|cffffd1004.|r Depois da primeira coleta o nó fica |cff33ff99salvo|r. A partir daí não precisa mais do minimapa: quando você estiver na área de novo, o marcador e a seta aparecem sozinhos (depois do tempo de renascer). Se chegar lá e ele não estiver, ele some até renascer.",
+        "|cffffd1004.|r Depois da primeira coleta o nó fica |cff33ff99salvo|r: o Farm Time sabe onde ele fica. Quando ele nascer de novo, uma passada rápida do mouse no minimapa (sem mirar no ponto exato) ou o jogo mirar a erva traz de volta o marcador e a seta. Só aparecem nós que existem de verdade.",
     TUT_FISH_TITLE  = "Pescando com uma tecla",
     TUT_FISH_BODY   = "|cffffd1001.|r Equipe uma |cff33ff99vara de pescar|r.\n" ..
         "|cffffd1002.|r Sem nada para interagir por perto, aperte |cffffd100%s|r: ela |cfffffffflança a isca|r.\n" ..

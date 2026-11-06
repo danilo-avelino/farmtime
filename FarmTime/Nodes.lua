@@ -591,7 +591,7 @@ local ARRIVE_TIME     = 4
 --  * a até LOOK_DISTANCE jardas, olhando para ele (LOOK_ANGLE), por LOOK_TIME,
 -- sem o jogo escolher nada como alvo de interação -> não está lá. Se o jogo
 -- estiver mirando OUTRA coisa, não conta (ele só mira um objeto por vez).
-local LOOK_DISTANCE, LOOK_ANGLE, LOOK_TIME = 22, math.rad(28), 3
+local LOOK_DISTANCE, LOOK_ANGLE, LOOK_TIME = 28, math.rad(28), 3
 local function CheckArrival(list, x, y, facing)
     local target = FT.currentTargetName
     local busy = FT.GetInteractTarget and FT:GetInteractTarget() ~= nil

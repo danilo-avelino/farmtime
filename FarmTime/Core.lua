@@ -39,7 +39,7 @@ FT.defaults = {
     hudShowUnconfirmed = false, -- também mostrar (em cinza) nós ainda não confirmados
     arrowEnabled  = true,  -- seta para o nó confirmado mais próximo
     trackUnknown  = true,
-    presumeRespawn = true,  -- nó salvo volta a aparecer sozinho depois do tempo de renascer
+    presumeRespawn = false, -- nó salvo volta a aparecer sozinho depois do tempo de renascer ("Provável"; erra muito)
     trackingWarning = true, -- aviso quando Find Herbs/Find Minerals está desligado
     tutorialSeen  = false,  -- tutorial já mostrado (abre sozinho só uma vez)  -- ponto do minimapa sem nó salvo vira nó "desconhecido"
     arrowRange    = 400,   -- jardas: alcance da seta
@@ -116,7 +116,10 @@ FT:RegisterEvent("ADDON_LOADED", function(self, name)
     -- 1.5.1: até aqui os eixos de UnitPosition estavam trocados; nós salvos
     -- antes disso têm posições erradas e são descartados.
     if (FarmTimeDB.schema or 0) < 8 then FarmTimeDB.nodes = nil end
-    FarmTimeDB.schema = 8
+    -- 1.16.1: nós "prováveis" (só pelo tempo de renascer) mostravam ervas que
+    -- não existiam; passam a vir desligados. Quem quiser liga com /ft respawn.
+    if (FarmTimeDB.schema or 0) < 9 then FarmTimeDB.presumeRespawn = nil end
+    FarmTimeDB.schema = 9
     CopyDefaults(self.defaults, FarmTimeDB)
     self.db = FarmTimeDB
 end)

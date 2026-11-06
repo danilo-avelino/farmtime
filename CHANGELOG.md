@@ -1,5 +1,11 @@
 # Farm Time — Changelog
 
+## v1.16.1
+
+- **"Likely respawned" nodes are now off by default.** They were guessed only from the respawn time, and often pointed to herbs that weren't there. Only confirmed nodes are shown: confirmed by the minimap, by the game targeting the herb, or by a guild/group member. Existing installs are switched off once on update; `/ft respawn` turns guessed nodes back on.
+- **Look-check range:** looking straight at a node from up to 28 yards (was 22) for 3 seconds, with nothing targeted, hides it.
+- **Tutorial:** step 4 updated.
+
 ## v1.16.0
 
 - **Fixed: herbs shown as available where there were none.** v1.15.5 confirmed the saved node nearest to *you* when the game targeted a herb up to 35 yards away. That could be a different spawn point with nothing on it.
