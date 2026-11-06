@@ -1,5 +1,16 @@
 # Farm Time — Changelog
 
+## v1.16.0
+
+- **Fixed: herbs shown as available where there were none.** v1.15.5 confirmed the saved node nearest to *you* when the game targeted a herb up to 35 yards away. That could be a different spawn point with nothing on it.
+  - **Confirmation now:** the herb's position is estimated from its name plate on screen, and the saved node nearest to that spot (within 12 yards) is confirmed. Without a name plate, only a node within 12 yards of you is confirmed, as before v1.15.5.
+- **Wrong nodes clean themselves up.** Any node shown as available, confirmed or presumed, is hidden for 10 minutes when nothing is there to be targeted:
+  - you stand within 8 yards of it for 4 seconds, or
+  - you look straight at it from up to 22 yards for 3 seconds,
+  - and in both cases the game targets nothing. If the game is targeting something else (a chest, a corpse…), it doesn't count.
+- **Translated names (WoW Forever launch).** The game now shows localized node names (e.g. "Magi-real" instead of "Mageroyal"), while nodes saved before are in English. When you gather, the looted item tells Farm Time the English name, and the pair is saved. From then on, minimap tooltips and targets in your language confirm the old nodes, and the translated name is shown on screen.
+- **Game version:** still interface 16001 for the WoW Forever launch (1.60.1).
+
 ## v1.15.5
 
 - **Confirmation without the minimap, from farther away:** when the game picks a herb/ore as your interact target (up to the "Range" setting, 30 yards by default), the nearest saved node with that name within that range is confirmed. Before, you had to be within 12 yards of the saved spot.

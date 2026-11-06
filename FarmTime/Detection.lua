@@ -49,8 +49,27 @@ local NODE_ITEMS = {
 local GetItemIconByID = (C_Item and C_Item.GetItemIconByID) or GetItemIcon
 
 -- Ícone do recurso do nó: tabela de itens > aprendido na coleta > nil.
+-- Nomes em outro idioma: o WoW Forever passou a mostrar os nomes traduzidos
+-- (ex. "Magi-real" em vez de "Mageroyal"), e os nós salvos antes estão em
+-- inglês. Ao coletar, o item que veio (ex. 785 = Mageroyal) diz qual é o nome
+-- em inglês; o par fica salvo em db.alias e todos os nós usam o nome em inglês
+-- por dentro, mostrando o traduzido na tela.
+function FT:CanonName(name)
+    if not name then return nil end
+    local alias = self.db and self.db.alias
+    return (alias and alias[name]) or name
+end
+
+function FT:DisplayName(name)
+    local rev = self.db and self.db.aliasRev
+    return (rev and name and rev[name]) or name
+end
+
+local ITEM_TO_NODE = {}
+
 function FT:GetNodeIcon(name)
     if not name then return nil end
+    name = self:CanonName(name)
     local itemID = NODE_ITEMS[name] or NODE_ITEMS[(name:gsub("^Ooze Covered ", ""))]
     if itemID and GetItemIconByID then
         local ok, icon = pcall(GetItemIconByID, itemID)
@@ -110,7 +129,7 @@ end)
 -- Retorna "herb", "ore" ou "other".
 function FT:Classify(name)
     if not name then return "other" end
-    local kind = self.db.names[name] or known[name]
+    local kind = self.db.names[name] or known[name] or known[self:CanonName(name)]
     if kind then return kind end
     -- Variações em inglês ("Ooze Covered Silver Vein" etc.)
     if name:find(" Vein$") or name:find(" Deposit$") then return "ore" end
@@ -150,7 +169,25 @@ end)
 -- nó. Assim ervas/minérios novos (do Forever ou em outro idioma) ganham ícone.
 FT:RegisterEvent("LOOT_OPENED", function(self)
     local kind, name = self:GetGatherKind()
-    if not (kind == "herb" or kind == "ore") or not name or self.db.nodeIcons[name] then return end
+    if not (kind == "herb" or kind == "ore") or not name then return end
+    -- Aprende o nome em inglês pelo item coletado (ver CanonName).
+    if not next(ITEM_TO_NODE) then
+        for en, id in pairs(NODE_ITEMS) do ITEM_TO_NODE[id] = ITEM_TO_NODE[id] or en end
+    end
+    if not known[name] then
+        for slot = 1, (GetNumLootItems and GetNumLootItems() or 0) do
+            local okl, link = pcall(GetLootSlotLink, slot)
+            local id = okl and type(link) == "string" and tonumber(link:match("item:(%d+)"))
+            local en = id and ITEM_TO_NODE[id]
+            if en and en ~= name and known[en] == kind then
+                self.db.alias = self.db.alias or {}
+                self.db.aliasRev = self.db.aliasRev or {}
+                self.db.alias[name], self.db.aliasRev[en] = en, name
+                break
+            end
+        end
+    end
+    if self.db.nodeIcons[name] then return end
     local ok, icon = pcall(GetLootSlotInfo, 1)
     if ok and icon then self.db.nodeIcons[name] = icon end
 end)

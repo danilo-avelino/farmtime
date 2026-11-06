@@ -215,7 +215,7 @@ function FT:RefreshHighlight()
         and self:KindVisible(kind)
 
     -- O nó salvo com esse nome, aqui perto, está confirmado (o jogo o vê).
-    self.currentTargetName = isObject and (kind == "herb" or kind == "ore") and name or nil
+    self.currentTargetName = isObject and (kind == "herb" or kind == "ore") and self:CanonName(name) or nil
     if self.currentTargetName and self.ConfirmNodeNearPlayer then
         self:ConfirmNodeNearPlayer(name)
     end

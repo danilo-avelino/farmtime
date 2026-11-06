@@ -136,6 +136,7 @@ end
 ---------------------------------------------------------------------------
 function FT:RecordNode(kind, name)
     if not (name and (kind == "herb" or kind == "ore")) then return end
+    name = self:CanonName(name)
     local x, y, z, inst = PlayerPosition()
     if not x then return end
     local list = NodesHere(inst, true)
@@ -222,6 +223,7 @@ local GRACE_NEAR    = 120
 local GRACE_MINIMAP = 15
 
 local function Confirm(name, x, y, inst, tolerance, grace)
+    name = FT:CanonName(name)
     local list = NodesHere(inst)
     if not list then return end
     -- Um nó salvo tem preferência sobre um desconhecido do mesmo nome.
@@ -292,15 +294,7 @@ function FT:ApplySharedNode(code, inst, x, y, kind, name)
     end
 end
 
--- a) Alvo de interação do jogo: o jogo achou essa erva/minério na sua frente,
---    a até "Alcance" jardas (SoftTargetInteractRange). Confirma o nó salvo com
---    esse nome mais perto de você dentro desse alcance, sem passar o mouse no
---    minimapa.
-function FT:ConfirmNodeNearPlayer(name)
-    local x, y, _, inst = PlayerPosition()
-    local reach = math.max(MERGE_DISTANCE, (self.db.interactRange or 30) + 5)
-    if x and name then Confirm(name, x, y, inst, reach, GRACE_NEAR) end
-end
+-- a) Alvo de interação do jogo: definido mais abaixo (precisa da projeção).
 
 -- b) Tooltip do minimapa: posição do cursor no minimapa -> posição no mundo.
 local function CursorWorldPosition()
@@ -370,7 +364,7 @@ local function ScanMinimapTooltip()
             local text = fs and fs:GetText()
             if text then
                 for line in CleanLine(text):gmatch("[^\n]+") do
-                    local name = line:match("^%s*(.-)%s*$")
+                    local name = FT:CanonName(line:match("^%s*(.-)%s*$"))
                     if name ~= "" then
                         names[name] = true
                         local node = Confirm(name, x, y, inst, dotRadius, GRACE_MINIMAP)
@@ -592,16 +586,30 @@ end
 -- nó nasceu em outro ponto). Some até o próximo tempo de renascer.
 local ARRIVE_DISTANCE = 8
 local ARRIVE_TIME     = 4
-local function CheckArrival(list, x, y)
+-- Vale para todo nó mostrado como disponível (confirmado ou presumido):
+--  * a até ARRIVE_DISTANCE jardas por ARRIVE_TIME segundos, ou
+--  * a até LOOK_DISTANCE jardas, olhando para ele (LOOK_ANGLE), por LOOK_TIME,
+-- sem o jogo escolher nada como alvo de interação -> não está lá. Se o jogo
+-- estiver mirando OUTRA coisa, não conta (ele só mira um objeto por vez).
+local LOOK_DISTANCE, LOOK_ANGLE, LOOK_TIME = 22, math.rad(28), 3
+local function CheckArrival(list, x, y, facing)
+    local target = FT.currentTargetName
+    local busy = FT.GetInteractTarget and FT:GetInteractTarget() ~= nil
     for _, n in ipairs(list) do
-        if not n.unknown and not IsConfirmed(n) and IsPresumed(n)
-            and Distance2(n, x, y) <= ARRIVE_DISTANCE * ARRIVE_DISTANCE then
-            if FT.currentTargetName == n.name then
+        local d2 = Distance2(n, x, y)
+        local near = d2 <= ARRIVE_DISTANCE * ARRIVE_DISTANCE
+        local looking = false
+        if not near and facing and d2 <= LOOK_DISTANCE * LOOK_DISTANCE then
+            local diff = (atan2(n.y - y, n.x - x) - facing + math.pi) % (2 * math.pi) - math.pi
+            looking = math.abs(diff) <= LOOK_ANGLE
+        end
+        if not n.unknown and IsAvailable(n) and (near or looking) then
+            if target == n.name then
                 n.arriveSince = nil
-            else
+            elseif not busy then
                 n.arriveSince = n.arriveSince or GetTime()
-                if GetTime() - n.arriveSince >= ARRIVE_TIME then
-                    n.arriveSince, n.missingAt = nil, time()
+                if GetTime() - n.arriveSince >= (near and ARRIVE_TIME or LOOK_TIME) then
+                    n.arriveSince, n.missingAt, n.confirmedAt = nil, time(), nil
                     if FT.db.debug then FT:Print(string.format(FT.L.NODE_MISSING, n.name)) end
                 end
             end
@@ -653,7 +661,7 @@ local function UpdateArrow(list, x, y, facing)
     arrow.tex:SetVertexColor(c[1], c[2], c[3])
     local dist = string.format(FT.L.HUD_DISTANCE, math.floor(sqrt(bestD2) + 0.5))
     arrow.plate:SetContent(FT:GetNodeIcon(best.name) or "Interface\\Icons\\INV_Misc_QuestionMark",
-        best.unknown and ("? " .. best.name) or best.name,
+        best.unknown and ("? " .. FT:DisplayName(best.name)) or FT:DisplayName(best.name),
         best.unknown and (FT.L.NODE_UNKNOWN .. " - " .. dist)
             or (not IsConfirmed(best) and (FT.L.NODE_PRESUMED .. " - " .. dist)) or dist,
         color, 24, not confirmed)
@@ -701,6 +709,32 @@ local function CorrectUnknown(list, x, y, facing)
     end
 end
 
+-- a) Alvo de interação do jogo: a erva/minério com esse nome existe na sua
+--    frente. Onde? A placa de nome dela na tela, convertida para o chão, dá a
+--    posição; o nó salvo mais perto DESSE ponto é confirmado. Sem placa, só o
+--    nó a poucas jardas de você (o jogo mira longe; o nó salvo mais perto de
+--    você pode ser outro ponto de nascimento, sem erva).
+local ESTIMATE_TOLERANCE = 12
+function FT:ConfirmNodeNearPlayer(name)
+    local x, y, _, inst = PlayerPosition()
+    if not (x and name) then return end
+    local facing = PlayerFacing(x, y)
+    local plate = facing and self:GetInteractPlate()
+    if plate and plate.IsVisible and plate:IsVisible() then
+        local ok, cx = pcall(plate.GetCenter, plate)
+        local okb, bottom = pcall(plate.GetBottom, plate)
+        if ok and okb and cx and bottom then
+            local k = plate:GetEffectiveScale() / overlay:GetEffectiveScale()
+            local dx, dy = Unproject(cx * k, bottom * k, PLATE_HEIGHT, facing, overlay:GetWidth(), overlay:GetHeight())
+            if dx and dx * dx + dy * dy <= MAX_ESTIMATE * MAX_ESTIMATE then
+                Confirm(name, x + dx, y + dy, inst, ESTIMATE_TOLERANCE, GRACE_NEAR)
+                return
+            end
+        end
+    end
+    Confirm(name, x, y, inst, MERGE_DISTANCE, GRACE_NEAR)
+end
+
 local function UpdateMarkers()
     local db = FT.db
     local used = 0
@@ -712,7 +746,7 @@ local function UpdateMarkers()
     if list and sinceCorrect >= 0.2 then
         sinceCorrect = 0
         pcall(CorrectUnknown, list, x, y, facing)
-        pcall(CheckArrival, list, x, y)
+        pcall(CheckArrival, list, x, y, facing)
     end
 
     if list and db.hudEnabled then
